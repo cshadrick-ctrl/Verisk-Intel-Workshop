@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Intel Positioning Workshop | Ammunition × Verisk</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --or:#FF5400;--or-dim:rgba(255,84,0,0.1);--or-mid:rgba(255,84,0,0.25);
+  --vk:#1B6EC2;--vk-dark:#003087;--vk-dim:rgba(27,110,194,0.12);--vk-mid:rgba(27,110,194,0.28);
+  --bg:#07090F;--s1:#141828;--s2:#1C2235;--s3:#252B40;
+  --bd:#2A3248;--bd2:#384060;
+  --t:#EEF2F8;--tm:#C8D0DC;--td:#8C96A8;--tx:#6B7585;
+  --gold:#FFB800;--purple:#9B8AFB;--green:#00C48C;--blue:#3B9EFF;--red:#FF4D4D;
+  --rad:8px;--radl:12px;
+  --f:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--f);-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;min-height:100vh}
+
+/* HEADER */
+.hd{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0;position:sticky;top:0;z-index:200}
+.hd-brand{display:flex;align-items:center;gap:14px}
+.hd-ammo{font-size:11px;font-weight:800;letter-spacing:0.24em;text-transform:uppercase;color:var(--or)}
+.hd-vk{font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--vk)}
+.hd-sep{width:1px;height:16px;background:var(--bd2)}
+.hd-title{display:none}
+.hd-mid{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:160px}
+.s-lbl{font-size:13px;font-weight:700;color:var(--t);letter-spacing:0.02em}
+.s-prog-bar{width:160px;height:3px;background:var(--bd2);border-radius:2px;overflow:hidden}
+.s-prog-fill{height:100%;background:var(--or);border-radius:2px;transition:width .3s}
+.hd-r{display:flex;align-items:center;gap:12px}
+.hd-btn{padding:6px 14px;border-radius:var(--rad);border:1px solid var(--bd2);background:transparent;color:var(--td);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--f)}
+.hd-btn:hover{background:var(--s2);color:var(--t)}
+.hd-btn.on{border-color:var(--or);color:var(--or);background:var(--or-dim)}
+.t-time{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--t)}
+.t-time.warn{color:var(--gold)}.t-time.crit{color:var(--red)}
+.timer-wrap{display:flex;align-items:center;gap:10px}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.ov-box{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--radl);padding:40px 48px;max-width:580px;width:92%}
+.ov-eye{font-size:10px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--or);margin-bottom:10px}
+.ov-h1{font-size:24px;font-weight:900;letter-spacing:-0.02em;margin-bottom:12px}
+.ov-body{font-size:14px;color:var(--tm);line-height:1.65;margin-bottom:22px}
+.ov-body.challenge{font-size:17px;font-style:italic;color:var(--t);line-height:1.65;padding:16px 20px;background:var(--s2);border-radius:var(--rad);border-left:3px solid var(--or);margin-bottom:10px}
+.ov-note{font-size:11px;color:var(--td);margin-bottom:20px}
+.ov-stars{display:flex;flex-direction:column;gap:7px;margin-bottom:20px}
+.ov-star-item{display:flex;gap:10px;padding:9px 13px;background:var(--s2);border-radius:var(--rad)}
+.ov-star-lbl{font-size:9px;font-weight:800;color:var(--or);letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+.ov-star-txt{font-size:12px;color:var(--t);line-height:1.5}
+.ov-acts{display:flex;gap:8px;justify-content:flex-end}
+.ov-btn{padding:9px 22px;border-radius:var(--rad);border:none;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)}
+.ov-btn.prim{background:var(--or);color:#fff}
+.ov-btn.sec{background:var(--s3);color:var(--tm);border:1px solid var(--bd2)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;position:relative}
+
+/* WELCOME */
+.w-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 40px;text-align:center;position:relative;overflow:hidden}
+.w-bg{position:absolute;font-size:240px;font-weight:900;letter-spacing:-0.05em;color:rgba(255,84,0,0.025);user-select:none;pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;line-height:1}
+.cb-lockup{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.cb-mark{display:flex;flex-direction:column;align-items:center;gap:3px}
+.cb-name{font-size:10px;font-weight:800;letter-spacing:0.26em;text-transform:uppercase}
+.cb-name.ammo{color:var(--or)}.cb-name.verisk{color:var(--vk)}
+.cb-rule{width:32px;height:2px;border-radius:1px}
+.cb-rule.ammo{background:var(--or)}.cb-rule.verisk{background:var(--vk)}
+.cb-x{font-size:16px;font-weight:300;color:var(--td);padding:0 2px;line-height:1}
+.w-intel{font-size:12px;font-weight:700;letter-spacing:0.26em;text-transform:uppercase;color:var(--vk);margin-bottom:8px}
+.w-h1{font-size:52px;font-weight:900;letter-spacing:-0.03em;line-height:1.05;margin-bottom:8px}
+.w-h1 em{font-style:italic;color:var(--or)}
+.w-workshop{font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--td);margin-bottom:28px}
+.w-sub{font-size:16px;color:var(--tm);max-width:460px;line-height:1.7;margin-bottom:36px}
+.w-meta{display:flex;gap:24px;margin-bottom:32px;color:var(--td);font-size:12px;flex-wrap:wrap;justify-content:center}
+.btn-start{padding:13px 36px;background:var(--or);color:#fff;font-size:14px;font-weight:800;border:none;border-radius:var(--rad);cursor:pointer;font-family:var(--f)}
+.btn-start:hover{background:#e84800;transform:translateY(-1px)}
+.w-timeline{display:flex;max-width:980px;width:100%;margin-top:44px;border-radius:var(--radl);overflow:hidden;border:1px solid var(--bd)}
+.tl-item{flex:1;padding:18px 14px 16px;border-right:1px solid var(--bd);background:var(--s1);display:flex;flex-direction:column;gap:4px;min-width:0}
+.tl-item:last-child{border-right:none}
+.tl-item.reads{background:rgba(255,84,0,0.07);border-color:rgba(255,84,0,0.18)}
+.tl-item.brk{background:var(--s2)}
+.tl-time{font-size:12px;font-weight:800}
+.tl-time.or{color:var(--or)}.tl-time.vk{color:var(--vk)}.tl-time.dim{color:var(--td)}
+.tl-title{font-size:12px;font-weight:700;color:var(--t);line-height:1.25}
+.tl-dur{font-size:10px;color:var(--td);margin-top:2px}
+.w-prework{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:980px;width:100%;margin-top:14px}
+.pw-item{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);padding:16px 18px;display:flex;gap:12px;align-items:flex-start;text-align:left}
+.pw-num{width:22px;height:22px;border-radius:50%;background:var(--or-dim);border:1px solid var(--or-mid);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--or);flex-shrink:0;margin-top:2px}
+.pw-txt{font-size:13px;color:var(--tm);line-height:1.55}
+.pw-txt strong{color:var(--t);display:block;margin-bottom:2px}
+
+/* FRAMING — PURPOSE */
+.fr-purpose{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr auto;gap:24px;padding:52px 64px;overflow-y:auto}
+.fr-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);padding:28px 32px}
+.fr-lbl{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--td);margin-bottom:10px}
+.fr-txt{font-size:15px;color:var(--t);line-height:1.7}
+.fr-anchor-card{background:rgba(27,110,194,0.07);border:1px solid var(--vk-mid);border-radius:var(--radl);padding:28px 32px}
+.fr-anchor-date{font-size:32px;font-weight:900;letter-spacing:-0.02em;color:var(--vk);line-height:1;margin-bottom:8px}
+.fr-p-list{display:flex;flex-direction:column;gap:8px}
+.fr-p-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.fr-p-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fr-rules{grid-column:1/-1;background:var(--or-dim);border:1px solid var(--or-mid);border-radius:var(--radl);padding:18px 24px;display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+.fr-rules-lbl{font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--or);white-space:nowrap}
+.fr-rule{font-size:13px;color:var(--t);display:flex;align-items:center;gap:7px}
+.r-dot{width:4px;height:4px;border-radius:50%;background:var(--or);flex-shrink:0}
+
+/* FRAMING — LANDSCAPE */
+.fr-landscape{flex:1;padding:44px 56px;overflow-y:auto}
+.screen-eye{font-size:10px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:var(--or);margin-bottom:12px}
+.screen-h1{font-size:38px;font-weight:900;letter-spacing:-0.02em;line-height:1.1;margin-bottom:8px}
+.screen-sub{font-size:15px;color:var(--tm);line-height:1.65;margin-bottom:28px;max-width:640px}
+.comp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.comp-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);padding:22px 20px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+.comp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.comp-name{font-size:15px;font-weight:800;color:var(--t)}
+.comp-owns{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--td)}
+.comp-claim{font-size:12px;color:var(--tm);line-height:1.6;font-style:italic;flex:1}
+.comp-gap-lbl{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+.comp-gap{font-size:12px;color:var(--t);font-weight:600}
+
+/* FRAMING — HYPOTHESIS */
+.fr-hyp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:56px 80px;text-align:center;overflow-y:auto}
+.hyp-eye{font-size:10px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:var(--or);margin-bottom:16px;display:flex;align-items:center;gap:8px;justify-content:center}
+.hyp-h1{font-size:30px;font-weight:900;letter-spacing:-0.02em;margin-bottom:10px}
+.hyp-lbl{font-size:14px;color:var(--tm);margin-bottom:20px;line-height:1.55}
+.hyp-ta{width:100%;max-width:760px;min-height:160px;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--radl);padding:22px 26px;color:var(--t);font-size:18px;font-weight:700;font-family:var(--f);line-height:1.65;resize:vertical;outline:none;text-align:left;overflow:hidden}
+.hyp-ta::placeholder{color:var(--td);font-weight:400}
+.hyp-ta:focus{border-color:var(--or-mid)}
+.hyp-prompt{font-size:14px;color:var(--or);font-style:italic;margin-top:16px;max-width:560px}
+
+/* STIMULUS — WHITE SPACE */
+.stim-ws{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 80px;text-align:center;position:relative;overflow:hidden}
+.stim-ws-bg{position:absolute;font-size:200px;font-weight:900;letter-spacing:-0.05em;color:rgba(27,110,194,0.04);user-select:none;pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;line-height:1}
+.ws-eye{font-size:10px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:var(--vk);margin-bottom:16px}
+.ws-word{font-size:88px;font-weight:900;letter-spacing:-0.04em;color:var(--vk);line-height:1;margin-bottom:24px}
+.ws-divider{width:64px;height:3px;background:var(--vk);border-radius:2px;margin:0 auto 24px}
+.ws-body{font-size:18px;color:var(--tm);line-height:1.75;max-width:680px;margin-bottom:32px}
+.ws-body strong{color:var(--t)}
+.ws-territory{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:880px;width:100%}
+.ws-comp{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);padding:12px 14px;text-align:left}
+.ws-comp-name{font-size:11px;font-weight:800;color:var(--tm);margin-bottom:3px}
+.ws-comp-claim{font-size:11px;color:var(--td)}
+
+/* STIMULUS — TRENDS */
+.stim-trends{flex:1;padding:36px 44px;overflow-y:auto}
+.trend-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.trend-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s}
+.trend-card.voted-urgent{border-color:var(--or);background:rgba(255,84,0,0.04)}
+.trend-card.voted-own{border-color:var(--green);background:rgba(0,196,140,0.04)}
+.trend-card.voted-both{border-color:var(--gold);background:rgba(255,184,0,0.04)}
+.trend-card-hd{padding:14px 16px 12px;border-bottom:1px solid var(--bd)}
+.trend-num{font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--td);margin-bottom:6px}
+.trend-title{font-size:14px;font-weight:800;color:var(--t);line-height:1.3}
+.trend-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:12px}
+.trend-evidence{font-size:12px;color:var(--tm);line-height:1.6}
+.trend-prov{font-size:12px;color:var(--or);font-style:italic;line-height:1.55;padding-top:10px;border-top:1px solid var(--bd)}
+.trend-votes{display:flex;gap:6px;padding:12px 16px;border-top:1px solid var(--bd)}
+.tvote{flex:1;padding:7px 4px;border-radius:var(--rad);border:1px solid var(--bd2);background:transparent;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f);transition:all .2s;color:var(--td);text-align:center;line-height:1.3}
+.tvote.urgent.act{border-color:var(--or);color:var(--or);background:var(--or-dim)}
+.tvote.own.act{border-color:var(--green);color:var(--green);background:rgba(0,196,140,0.08)}
+.vote-tally{background:var(--s2);border:1px solid var(--bd);border-radius:var(--radl);padding:14px 20px;display:flex;gap:24px;align-items:center}
+.tally-lbl{font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--td);margin-bottom:4px}
+.tally-val{font-size:13px;font-weight:700;color:var(--t)}
+.tally-val.empty{color:var(--td);font-weight:400;font-style:italic}
+.tally-div{width:1px;height:36px;background:var(--bd2)}
+
+/* DISCUSSION SCREEN */
+.disc-screen{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+.disc-left{padding:64px 56px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--bd)}
+.disc-tag{font-size:10px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:var(--or);margin-bottom:16px}
+.disc-h1{font-size:40px;font-weight:900;letter-spacing:-0.025em;line-height:1.1;margin-bottom:16px}
+.disc-sub{font-size:16px;color:var(--tm);line-height:1.7;margin-bottom:32px}
+.disc-prompts{display:flex;flex-direction:column;gap:10px}
+.disc-persona-prompt{background:var(--s2);border-radius:var(--rad);padding:14px 16px}
+.disc-pp-name{font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px}
+.disc-pp-q{font-size:14px;color:var(--t);line-height:1.6;font-style:italic}
+.disc-right{padding:56px 52px;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.disc-q{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);padding:22px 24px}
+.disc-q-num{font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--td);margin-bottom:8px}
+.disc-q-lbl{font-size:18px;font-weight:700;color:var(--t);line-height:1.35;margin-bottom:6px}
+.disc-q-hint{font-size:13px;color:var(--tm);line-height:1.55}
+
+/* CAPTURE SCREEN (full-width, simplified) */
+.cap-screen{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:40px 56px}
+.cap-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px}
+.cap-tag{font-size:10px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--or)}
+.p-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.p-tab{padding:10px 16px;border-radius:var(--rad);border:1px solid var(--bd);background:var(--s1);cursor:pointer;transition:all .2s;font-family:var(--f)}
+.p-tab-nm{font-size:11px;font-weight:700;color:var(--t);margin-bottom:1px;display:flex;justify-content:space-between;gap:8px}
+.p-tab-rl{font-size:10px;color:var(--td)}
+.add-p-btn{padding:8px 11px;border-radius:var(--rad);border:1px dashed var(--bd2);background:transparent;color:var(--td);font-size:15px;cursor:pointer;transition:all .2s;font-family:var(--f)}
+.add-p-btn:hover{border-color:var(--or);color:var(--or);background:var(--or-dim)}
+.add-p-form{display:none;gap:7px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.add-p-form.open{display:flex}
+.add-p-in{background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rad);padding:7px 11px;color:var(--t);font-size:12px;font-family:var(--f);outline:none}
+.add-p-in::placeholder{color:var(--td)}
+.add-p-in:focus{border-color:rgba(255,84,0,0.5)}
+.add-p-save{padding:7px 14px;background:var(--or);border:none;border-radius:var(--rad);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f)}
+.add-p-cancel{padding:7px 10px;background:transparent;border:1px solid var(--bd2);border-radius:var(--rad);color:var(--tm);font-size:11px;cursor:pointer;font-family:var(--f)}
+.cap-persona-hd{margin-bottom:20px;padding-top:4px}
+.cap-pname{font-size:20px;font-weight:900;margin-bottom:2px}
+.cap-prole{font-size:12px;color:var(--tm)}
+.cap-prompt{background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rad);border-left-width:3px;padding:18px 22px;font-size:15px;color:var(--t);line-height:1.7;font-style:italic;margin-bottom:28px}
+.cap-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px}
+.cap-field{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden;transition:border-color .2s}
+.cap-field:focus-within{border-color:var(--bd2)}
+.cap-field.starred{border-color:rgba(255,184,0,0.4);background:rgba(255,184,0,0.03)}
+.cap-flbl{padding:12px 16px 10px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--tm);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.f-num{width:16px;height:16px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--td);flex-shrink:0}
+.f-lbl-txt{flex:1}
+.star-btn{background:none;border:none;cursor:pointer;color:var(--td);font-size:13px;padding:0;line-height:1;transition:color .2s}
+.star-btn:hover{color:var(--gold)}.star-btn.on{color:var(--gold)}
+.cap-ta{width:100%;min-height:140px;background:transparent;border:none;padding:14px 16px;color:var(--t);font-size:14px;font-family:var(--f);line-height:1.7;resize:vertical;outline:none}
+.cap-ta::placeholder{color:var(--tx)}
+.cap-extras{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+.belief-field{background:rgba(155,138,251,0.06);border:1px solid rgba(155,138,251,0.2);border-radius:var(--radl);overflow:hidden}
+.belief-hd{padding:8px 14px 6px;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid rgba(155,138,251,0.15);display:flex;align-items:center;gap:7px}
+.belief-ta{width:100%;min-height:64px;background:transparent;border:none;padding:10px 14px;color:var(--t);font-size:13px;font-family:var(--f);line-height:1.6;resize:vertical;outline:none}
+.belief-ta::placeholder{color:rgba(155,138,251,0.3)}
+.verbatim-panel{background:var(--s2);border:1px solid var(--bd2);border-radius:var(--radl);overflow:hidden}
+.verbatim-hd{padding:8px 14px 6px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--bd)}
+.verbatim-icon{font-size:13px;color:var(--purple)}
+.verbatim-lbl{font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--purple)}
+.verbatim-sub{font-size:10px;color:var(--td);margin-left:auto}
+.verbatim-ta{width:100%;min-height:64px;background:transparent;border:none;padding:10px 14px;color:var(--t);font-size:13px;font-family:var(--f);font-style:italic;line-height:1.65;resize:vertical;outline:none}
+.verbatim-ta::placeholder{color:var(--td)}
+.enemy-field{background:rgba(255,77,77,0.06);border:1px solid rgba(255,77,77,0.2);border-radius:var(--radl);overflow:hidden}
+.enemy-hd{padding:8px 14px 6px;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);border-bottom:1px solid rgba(255,77,77,0.15)}
+.enemy-ta{width:100%;min-height:64px;background:transparent;border:none;padding:10px 14px;color:var(--t);font-size:13px;font-family:var(--f);line-height:1.6;resize:vertical;outline:none}
+.enemy-ta::placeholder{color:rgba(255,77,77,0.25)}
+.comp-territory{background:var(--s2);border:1px solid var(--bd);border-radius:var(--radl);padding:14px 16px;margin-bottom:12px}
+.ct-lbl{font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--td);margin-bottom:10px}
+.ct-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ct-item{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);padding:9px 11px}
+.ct-name{font-size:10px;font-weight:800;color:var(--tm);margin-bottom:2px}
+.ct-claim{font-size:11px;color:var(--td);line-height:1.4}
+.ct-item.intel{border-color:rgba(255,84,0,0.3);background:var(--or-dim)}
+.ct-item.intel .ct-name{color:var(--or)}
+
+/* READS THE ROOM */
+.pb-screen{flex:1;padding:40px 52px;overflow-y:auto}
+.pb-hd{margin-bottom:28px}
+.pb-eye{font-size:10px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:var(--or);margin-bottom:10px}
+.pb-h1{font-size:34px;font-weight:900;letter-spacing:-0.02em;line-height:1.1;margin-bottom:10px}
+.pb-sub{font-size:15px;color:var(--tm);line-height:1.65;max-width:720px}
+.pb-frames{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.pb-frame{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden;display:flex;flex-direction:column;transition:border-color .3s}
+.pb-frame.selected{border-color:var(--or);background:rgba(255,84,0,0.04)}
+.pb-frame.rejected{opacity:0.45}
+.pb-frame-hd{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.pb-frame-num{font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--td)}
+.pb-frame-num.sel{color:var(--or)}
+.pb-frame-acts{display:flex;gap:5px}
+.pb-react-btn{padding:4px 9px;border-radius:20px;border:1px solid var(--bd2);background:transparent;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f);transition:all .2s;color:var(--tm)}
+.pb-react-btn.this-is.act{border-color:var(--green);color:var(--green);background:rgba(0,196,140,0.1)}
+.pb-react-btn.not-us.act{border-color:var(--red);color:var(--red);background:rgba(255,77,77,0.1)}
+.pb-react-btn.warmer.act{border-color:var(--gold);color:var(--gold);background:rgba(255,184,0,0.1)}
+.pb-frame-ta{flex:1;width:100%;min-height:180px;background:transparent;border:none;padding:16px;color:var(--t);font-size:14px;font-weight:600;font-family:var(--f);line-height:1.65;resize:vertical;outline:none;overflow:hidden}
+.pb-frame-ta::placeholder{color:var(--td);font-weight:400}
+.pb-reaction{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden}
+.pb-reaction-hd{padding:9px 14px;border-bottom:1px solid var(--bd);font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--tm)}
+.pb-reaction-ta{width:100%;min-height:80px;background:transparent;border:none;padding:12px 14px;color:var(--t);font-size:13px;font-family:var(--f);line-height:1.65;resize:vertical;outline:none}
+.pb-reaction-ta::placeholder{color:var(--tx)}
+
+/* BREAK */
+.brk-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;text-align:center}
+.brk-h1{font-size:72px;font-weight:900;letter-spacing:-0.04em;margin-bottom:10px}
+.brk-sub{font-size:16px;color:var(--tm);margin-bottom:28px}
+.brk-t{font-size:88px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--or);letter-spacing:-0.04em;margin-bottom:28px;line-height:1}
+.brk-note{max-width:420px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);padding:20px 24px;text-align:left}
+.brk-nlbl{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--td);margin-bottom:6px}
+.brk-ntxt{font-size:14px;color:var(--tm);line-height:1.6}
+
+/* SYNTHESIS */
+.syn-screen{flex:1;padding:32px 40px;overflow-y:auto}
+.syn-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.syn-h1{font-size:32px;font-weight:900;letter-spacing:-0.02em}
+.syn-sub{font-size:13px;color:var(--tm);margin-top:4px}
+.syn-note{font-size:11px;color:var(--td);font-style:italic;margin-top:2px}
+.btn-exp{padding:9px 20px;background:var(--or);color:#fff;font-size:11px;font-weight:800;border:none;border-radius:var(--rad);cursor:pointer;font-family:var(--f)}
+.ot-block{background:rgba(255,84,0,0.06);border:1px solid var(--or-mid);border-radius:var(--radl);padding:20px 24px;margin-bottom:18px}
+.ot-lbl{font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--or);margin-bottom:5px}
+.ot-desc{font-size:12px;color:var(--tm);margin-bottom:8px}
+.ot-rule{font-size:11px;color:var(--td);margin-bottom:10px;font-style:italic}
+.ot-ta{width:100%;min-height:60px;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rad);padding:12px 14px;color:var(--t);font-size:15px;font-weight:700;font-family:var(--f);line-height:1.5;resize:vertical;outline:none}
+.ot-ta::placeholder{color:var(--td);font-weight:400}
+.syn-signals-block{background:var(--s2);border:1px solid var(--bd);border-radius:var(--radl);padding:16px 20px;margin-bottom:18px}
+.syn-sig-lbl{font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--tm);margin-bottom:10px}
+.syn-sig-rows{display:flex;flex-direction:column;gap:6px}
+.syn-sig-row{display:flex;gap:10px;padding:8px 12px;background:var(--s1);border-radius:var(--rad)}
+.syn-sig-type{font-size:9px;font-weight:800;color:var(--or);flex-shrink:0;padding-top:2px;letter-spacing:0.08em;text-transform:uppercase}
+.syn-sig-txt{font-size:12px;color:var(--tm);line-height:1.5}
+.p-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px}
+.p-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--radl);overflow:hidden}
+.p-card-hd{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px}
+.p-ind{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.p-card-nm{font-size:13px;font-weight:800}
+.p-card-rl{font-size:10px;color:var(--td);margin-right:4px}
+.p-src-tag{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-left:auto;flex-shrink:0}
+.syn-row{padding:9px 16px;border-bottom:1px solid var(--bd);display:grid;grid-template-columns:88px 1fr;gap:8px;align-items:flex-start}
+.syn-row:last-child{border-bottom:none}
+.syn-rl{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--td);padding-top:2px;line-height:1.3}
+.syn-ct{font-size:12px;color:var(--tm);line-height:1.5}
+.syn-ct.emp{color:var(--td);font-style:italic}
+.syn-star{display:flex;align-items:flex-start;gap:4px}
+.syn-star-ic{color:var(--gold);font-size:10px;flex-shrink:0;margin-top:2px}
+.syn-belief{color:var(--purple);font-style:italic;margin-top:4px}
+.syn-vb{color:var(--purple);font-style:italic;margin-top:3px;font-size:11px;border-top:1px solid var(--bd);padding-top:3px}
+.sig-ta{width:100%;min-height:60px;background:transparent;border:none;color:var(--t);font-size:12px;font-family:var(--f);line-height:1.6;resize:vertical;outline:none}
+.sig-ta::placeholder{color:var(--tx)}
+.cross-block{background:var(--s2);border:1px solid var(--bd);border-radius:var(--radl);padding:18px 22px}
+.cross-lbl{font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--tm);margin-bottom:6px}
+.cross-desc{font-size:11px;color:var(--td);margin-bottom:10px;line-height:1.5}
+.cross-ta{width:100%;min-height:68px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--rad);padding:11px 13px;color:var(--t);font-size:13px;font-family:var(--f);line-height:1.6;resize:vertical;outline:none}
+.cross-ta:focus{border-color:var(--bd2)}
+.cross-ta::placeholder{color:var(--tx)}
+
+/* FOOTER */
+.ft{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px;background:var(--s1);border-top:1px solid var(--bd);flex-shrink:0}
+.nav-btn{display:flex;align-items:center;gap:6px;padding:8px 20px;border-radius:var(--rad);border:1px solid var(--bd2);background:transparent;color:var(--tm);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--f)}
+.nav-btn:hover:not(:disabled){background:var(--s2);color:var(--t)}
+.nav-btn:disabled{opacity:0.3;cursor:not-allowed}
+.nav-btn.prim{background:var(--or);border-color:var(--or);color:#fff}
+.nav-btn.prim:hover{background:#e84800}
+.ft-mid{text-align:center}
+.ft-nm{font-size:13px;font-weight:700;color:var(--tm)}
+.ft-cnt{font-size:10px;color:var(--td);margin-top:1px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div class="hd-brand">
+      <span class="hd-ammo">Ammunition</span>
+      <div class="hd-sep"></div>
+      <span class="hd-vk">Verisk</span>
+    </div>
+    <div class="hd-mid">
+      <span class="s-lbl" id="s-lbl"></span>
+      <div class="s-prog-bar"><div class="s-prog-fill" id="s-prog-fill"></div></div>
+    </div>
+    <div class="hd-r">
+      <div id="save-status" style="font-size:10px;font-weight:600;color:var(--td);letter-spacing:0.04em;white-space:nowrap"></div>
+      <button class="hd-btn" id="chal-btn" onclick="triggerChallenge()" style="display:none">Challenge</button>
+      <div class="timer-wrap" id="timer-wrap" style="display:none">
+        <span class="t-time" id="t-time">20:00</span>
+        <button class="hd-btn" id="t-start" onclick="toggleTimer()">Start</button>
+        <button class="hd-btn" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>
+  </header>
+  <main class="main" id="main"></main>
+  <div class="overlay" id="overlay"><div class="ov-box" id="ov-box"></div></div>
+  <footer class="ft">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="nav-btn" onclick="goTo(0)" style="font-size:11px;letter-spacing:0.04em">&laquo; Start</button>
+      <button class="nav-btn" id="btn-prev" onclick="go(-1)" disabled>&#8592; Back</button>
+    </div>
+    <div class="ft-mid"><div class="ft-nm" id="ft-nm"></div><div class="ft-cnt" id="ft-cnt"></div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="nav-btn prim" id="btn-next" onclick="goNext()">Begin Workshop &#8594;</button>
+      <button class="nav-btn" onclick="goTo(S.length-1)" style="font-size:11px;letter-spacing:0.04em">End &raquo;</button>
+    </div>
+  </footer>
+</div>
+<script>
+// ── PERSONAS ─────────────────────────────────────────────────────────────────
+const BASE_P=[
+  {id:'hf', label:'Head of Fraud',         role:'Strategic accountability',c:'#FF5400',r:'255,84,0',   src:'brief'},
+  {id:'siu',label:'SIU Investigator',       role:'Daily operations',       c:'#3B9EFF',r:'59,158,255', src:'brief'},
+  {id:'cd', label:'Claims Director',        role:'P&L ownership',          c:'#00C48C',r:'0,196,140',  src:'brief'},
+  {id:'fcr',label:'Head of Financial Crime',role:'Risk & compliance',      c:'#9B8AFB',r:'155,138,251',src:'brief'},
+];
+const EXTRA_C=[{c:'#FF9500',r:'255,149,0'},{c:'#FF3B8C',r:'255,59,140'},{c:'#00BCD4',r:'0,188,212'}];
+
+// ── COMPETITOR DATA ───────────────────────────────────────────────────────────
+const COMP=[
+  {name:'FRISS',      color:'#4A9EFF', owns:'Trust automation',        claim:"Industry's first Trust Automation platform for P&C Insurers. Automates risk assessment behind every customer interaction across underwriting, claims and SIU.", gap:'Automated triage at point of claim. No investigation depth. No cross-LOB connected intelligence.'},
+  {name:'Shift',      color:'#FF9F43', owns:'AI transformation',       claim:'Enterprise AI-led transformation, expertise in claims fraud, integration with insurance ecosystem. GenAI to fight GenAI fraud.', gap:'Enterprise analytics-first. No operational investigator workflow layer.'},
+  {name:'Quantexa',   color:'#A29BFE', owns:'Decision intelligence',   claim:'Entity Resolution and graph technology to expose hidden risk and accelerate complex fraud investigations. "A culture of confidence around critical decision-making."', gap:"Already using 'confidence' language — generic data platform, not insurance-ops specific. Investigation is add-on, not core."},
+  {name:'LexisNexis', color:'#6EC6FF', owns:'Data signals & identity', claim:'Transform Your Risk Decision Making — big data, proprietary linking, advanced analytics. Synthetic identities and agentic bots driving 8% global fraud rise.', gap:'Signals and scores company. No investigator workflow. Breadth over depth.'},
+];
+
+// ── CAPTURE SECTION DATA ──────────────────────────────────────────────────────
+const CAPS={
+  cs:{id:'cs',tag:'01 — Current State',h1:'How fraud investigation works today.',
+    sub:'Real workflows. Real friction. What do people currently believe about fraud that shapes how they work — and what needs to shift?',
+    qs:[
+      {id:'q1',lbl:'Daily workflow & friction',ph:'How does this role manage their day? Where does fraud intelligence currently live? What manual work is unavoidable?'},
+      {id:'q2',lbl:'Current beliefs about fraud',ph:'What does this role believe about the scale or nature of fraud that may not be entirely accurate? What needs to shift for Intel to feel essential?'},
+      {id:'q3',lbl:'Gaps, confidence & risk',ph:"What information is missing that slows them down? When do they second-guess a decision? What creates professional or regulatory risk?"},
+      {id:'sector',lbl:'Sector differences',ph:"Does any of this shift across motor, property, pet, commercial, travel? Where does the friction look different by line of business?"},
+      {id:'proof',lbl:'Proof points & evidence',ph:"What data, case study, or verifiable claim exists for this persona? What can actually be published — a stat, a named client, a measurable outcome?"},
+    ],
+    prompts:{hf:'"Walk me through how you manage your fraud operation today. Where does the intelligence live? How do you know what your team knows — and doesn\'t?"',siu:'"Take me through a complex fraud investigation from start to finish. Where do you lose time? Where do you most second-guess your own work?"',cd:'"How do you currently get visibility into fraud exposure across lines of business? What don\'t you know that worries you?"',fcr:'"What\'s your view of the fraud landscape right now — organised, opportunistic, and internal risk? Where are the biggest blindspots?"'},
+    dur:20,
+  },
+  wc:{id:'wc',tag:'02 — What Changes',h1:'What Intel fundamentally shifts.',
+    sub:"Not faster or more accurate — what becomes possible for each role that was genuinely impossible before? And what does each role now KNOW that they used to only suspect?",
+    qs:[
+      {id:'q1',lbl:'Fundamental behaviour shift',ph:'What does this role do differently — not just quicker? What decisions change in nature, not just speed?'},
+      {id:'q2',lbl:'Confidence shift',ph:'How does confidence in their work change? What does certainty look like — speed, visibility, audit trail, connected signals?'},
+      {id:'q3',lbl:'New capabilities unlocked',ph:'What can this role actually do now that was genuinely impossible before — not easier, impossible?'},
+      {id:'sector',lbl:'Sector differences',ph:"Does the behaviour shift differ across motor, property, commercial, travel? Which lines of business feel the change most acutely?"},
+      {id:'proof',lbl:'Proof points & evidence',ph:"What verifiable claim supports this shift for this persona? A measurable outcome, a client story, a before/after stat that can be published?"},
+    ],
+    prompts:{hf:'"When Intel is running, what fundamentally changes about how you direct your team\'s intelligence work? Not faster — structurally different?"',siu:'"Think about a case you\'re working on right now. What can you do with Intel that was genuinely impossible before?"',cd:'"How does your view of fraud exposure change when you have a single intelligence layer across all claims and all lines of business?"',fcr:'"What does Intel change about your ability to detect and act on financial crime — organised, opportunistic, and internal — simultaneously?"'},
+    dur:20,hasBeliefShift:true,
+  },
+  wp:{id:'wp',tag:"03 — What's Protected",h1:'What each role is defending.',
+    sub:"Not what Intel features — what each person is protecting. Credibility, reputation, exposure. What does getting this wrong actually cost them?",
+    qs:[
+      {id:'q1',lbl:'Personal & professional stakes',ph:"What is this role personally protecting? Credibility, accountability? What does failure look like for them specifically?"},
+      {id:'q2',lbl:'What the platform defends',ph:"What specific risks does Intel let this role manage that they couldn't before — regulatory, operational, reputational?"},
+      {id:'q3',lbl:'Downstream beneficiaries',ph:'When this role gets better, who else wins? Compliance, claims, finance, the board — what chain of protection exists?'},
+      {id:'sector',lbl:'Sector differences',ph:"Does what's at stake differ across product lines? Does a commercial lines Head of Fraud face different exposure than a motor one?"},
+      {id:'proof',lbl:'Proof points & evidence',ph:"What verifiable claim or case study demonstrates what this persona is defending — and what Intel helps them protect? Stats, named clients, outcomes."},
+    ],
+    prompts:{hf:'"What\'s your personal exposure if a significant organised fraud ring goes undetected on your watch? What are you actually defending?"',siu:'"When you recommend a case for prosecution, what are you staking professionally? How does Intel change that calculation?"',cd:'"What does systemic fraud exposure cost beyond the financial — regulatory standing, customer trust, board accountability?"',fcr:'"What compliance, audit, or regulatory risk does centralised fraud intelligence help you demonstrate control over?"'},
+    dur:20,
+  },
+  wr:{id:'wr',tag:"04 — What's Replaced",h1:'What Intel makes unnecessary.',
+    sub:"The competitive territory. What old ways of working — and which competing platforms — does Intel displace? What does each role stop doing or stop paying for?",
+    qs:[
+      {id:'q1',lbl:'Tools & processes made obsolete',ph:"What specific tools, manual processes, or vendor relationships become redundant — Excel, point-solution fraud tools, everything?"},
+      {id:'q2',lbl:'Workarounds that disappear',ph:"What compensating behaviours has this role built around bad tooling? What stops being necessary?"},
+      {id:'q3',lbl:'Legacy thinking retired',ph:"What assumptions or habits of mind become outdated? What does this role stop accepting as 'just how it works'?"},
+      {id:'sector',lbl:'Sector differences',ph:"Does what gets replaced differ by product line? Are some lines more dependent on manual processes or legacy vendor tools than others?"},
+      {id:'proof',lbl:'Proof points & evidence',ph:"What verifiable claim demonstrates the displacement — a client who made the switch, a tool that was decommissioned, a measurable efficiency gain that's on record?"},
+    ],
+    prompts:{hf:'"What does your team stop doing once Intel is in place? What reporting, coordination, or manual briefing becomes unnecessary?"',siu:'"What workarounds disappear? In 6 months, what\'s no longer open on your desktop?"',cd:'"What do you stop asking your fraud team to produce? What metrics change when intelligence is centralised?"',fcr:'"What\'s the argument against Shift, Friss, or Quantexa when a Head of Fraud is evaluating Intel against them in a live buying decision?"'},
+    dur:20,hasCompFrame:true,hasEnemy:true,
+  },
+};
+
+// ── CHALLENGE QUESTIONS ───────────────────────────────────────────────────────
+const CHALLENGES={
+  cs:{hf:'"If you\'re honest — does the current fragmented system actually protect you from accountability, because no one has a complete picture to blame you with?"',siu:'"Are the workarounds your team built around bad tooling now part of your competitive edge? Would losing them feel like loss as well as progress?"',cd:'"When fraud leaks through undetected, how would you know? Is absence of evidence the same as evidence of absence — and does that suit you?"',fcr:'"Is your current risk model built around the fraud you can detect, rather than the fraud that\'s actually happening?"'},
+  wc:{hf:'"Full visibility also removes the \'I didn\'t know\' defence. Is your organisation genuinely ready for that accountability shift?"',siu:'"If network detection becomes automated, what happens to the investigator whose value was knowing the network in their head?"',cd:'"A cross-line platform will also expose your current fraud leakage rate more precisely. Is that a board conversation you\'re ready to have?"',fcr:'"If this works as described, the hard part isn\'t the platform — it\'s changing how your investigators think. What\'s the plan for that?"'},
+  wp:{hf:'"The data will reveal more fraud than anyone currently reports. That\'s good for the business — but uncomfortable for individuals. How does your org handle that?"',siu:'"If your decisions become fully auditable with an evidence trail, what happens to the experienced investigator\'s gut call?"',cd:'"Regulators will eventually want to know what you knew and when. Is Intel your defence — or does it create discovery risk?"',fcr:'"Does better fraud detection expose gaps in your historical oversight, or does it protect you from future ones?"'},
+  wr:{hf:'"The investigators who\'ve mastered the current fragmented system — do they see Intel as progress, or as a threat to the expertise they\'ve built?"',siu:'"What if some of the complexity you\'ve built around bad tooling is now part of your professional identity? What gets retired beyond the tools?"',cd:'"If spreadsheets work for 80% of your fraud operation, what\'s the actual cost of replacing them?"',fcr:'"Replacing gut instinct with connected intelligence is a culture change, not a software purchase. What makes Intel\'s case different from Shift, Friss, or Quantexa?"'},
+};
+
+// ── TREND DATA ────────────────────────────────────────────────────────────────
+const TRENDS=[
+  {id:'t1',num:'01',title:'From obvious deception to everyday manipulation',evidence:'Aviva: rise in opportunistic fraud within genuine claims — exaggerated damage, inflated contents. Admiral: AI-altered images contradicting claims. The line between genuine claim and manipulation is collapsing.',prov:'Are insurers still set up to fight "criminal fraud" when the bigger growth area may be everyday claim manipulation?'},
+  {id:'t2',num:'02',title:'AI has collapsed the effort required to create false evidence',evidence:"Verisk's own 2026 fraud study: 98% of insurers agree AI editing tools are fuelling digital media fraud. LexisNexis: synthetic identities and agentic bots driving 8% global fraud rise. Allianz UK: fake vehicle/property photos appearing across all lines.",prov:'If fake evidence becomes cheap and common, does the centre of gravity move from document verification to connected intelligence?'},
+  {id:'t3',num:'03',title:'Fraud is becoming harder to contain within a single claim, product or insurer',evidence:'ABI: 2025 fraud increasingly cross-product, AI-driven, identity theft. Fraud flagged in motor reappears in travel. IFIG exists because no single insurer can see the full cross-market picture.',prov:'Is the real fraud problem no longer detection, but visibility across products, entities and organisations?'},
+  {id:'t4',num:'04',title:'The category is shifting from fraud detection to decision confidence',evidence:"Shift, FRISS, Quantexa all race on AI and automation. But Quantexa is already using 'confidence' language — 'a culture of confidence around critical decision-making.' The territory is real. Nobody owns it specifically for fraud investigators.",prov:'Is confidence the more ownable territory than detection — and can Intel get there before Quantexa does?'},
+  {id:'t5',num:'05',title:'The operational enemy is not just fraud — it is fragmentation',evidence:"Verisk brief: legacy systems, fragmented infrastructures, manual processes, Excel, Word. LexisNexis's own research: 'trends driving orchestration demand — cost pressure, data silos and regulatory change are reshaping operating models.'",prov:'Has the industry added too many fraud tools without solving the bigger problem of fragmented intelligence?'},
+];
+
+// ── WORKING HYPOTHESIS FRAMES ─────────────────────────────────────────────────
+const WH_FRAMES=[
+  "Intel doesn't make fraud investigators faster. It makes their decisions defensible. Every investigator we spoke to is worried not just about finding fraud, but about being able to prove they were right. Intel changes the question from \"what did you find?\" to \"what can you prove?\"",
+  "Fraudsters don't operate within one line of business. Investigators do. Intel is the first platform built for how fraud actually works — connecting entities, cases, and intelligence across every line of business simultaneously, turning isolated suspicion into prosecutable intelligence.",
+  "The insurance industry's fraud problem isn't detection. It's decisiveness. Insurers already suspect more fraud than they act on. Intel closes the gap between what you suspect and what you can act on — with a complete evidence trail, at the speed the scale of fraud demands.",
+];
+
+// ── SECTION FLOW ─────────────────────────────────────────────────────────────
+const S=[
+  {id:'welcome',    type:'welcome'},
+  {id:'fr-purpose', type:'fr-purpose',  label:'Purpose',            grp:'Framing'},
+  {id:'fr-land',    type:'fr-land',     label:'The Landscape',      grp:'Framing'},
+  {id:'fr-hyp',     type:'fr-hyp',      label:'Our Hypothesis',     grp:'Framing'},
+  {id:'stim-ws',    type:'stim-ws',     label:'The White Space',    grp:'Market Intelligence'},
+  {id:'stim-trends',type:'stim-trends', label:'Five Shifts',        grp:'Market Intelligence', dur:10},
+  {id:'cs-disc',    type:'discussion',  label:'Current State',      grp:'Current State',  capRef:'cs'},
+  {id:'cs',         type:'capture',     label:'Capture',            grp:'Current State',  capRef:'cs', dur:20},
+  {id:'wc-disc',    type:'discussion',  label:'What Changes',       grp:'What Changes',   capRef:'wc'},
+  {id:'wc',         type:'capture',     label:'Capture',            grp:'What Changes',   capRef:'wc', dur:20},
+  {id:'playback',   type:'playback',    label:'Reads the Room',     grp:'Reads the Room', dur:5},
+  {id:'break',      type:'break',       label:'Break',              grp:'Break',           dur:10},
+  {id:'wp-disc',    type:'discussion',  label:"What's Protected",   grp:"What's Protected",capRef:'wp'},
+  {id:'wp',         type:'capture',     label:'Capture',            grp:"What's Protected",capRef:'wp', dur:20},
+  {id:'wr-disc',    type:'discussion',  label:"What's Replaced",    grp:"What's Replaced", capRef:'wr'},
+  {id:'wr',         type:'capture',     label:'Capture',            grp:"What's Replaced", capRef:'wr', dur:20},
+  {id:'syn',        type:'synthesis',   label:'Synthesis',          grp:'Synthesis'},
+];
+
+// ── STATE & NOTES ─────────────────────────────────────────────────────────────
+let cur=0, pa=0;
+let tInt=null, tRem=0, tRun=false;
+let N={}, priorities={}, verbatim={};
+
+const P=[...BASE_P];
+try{const cp=localStorage.getItem('vi_cp');if(cp)JSON.parse(cp).forEach(p=>P.push(p))}catch(e){}
+
+function initP(p){
+  Object.values(CAPS).forEach(cap=>{
+    const sid=cap.id;
+    if(!N[sid])N[sid]={};
+    if(!N[sid][p.id]){N[sid][p.id]={};cap.qs.forEach(q=>{N[sid][p.id][q.id]=''});if(cap.hasBeliefShift)N[sid][p.id]['belief']=''}
+    if(!priorities[sid])priorities[sid]={};
+    if(!priorities[sid][p.id])priorities[sid][p.id]={};
+    if(!verbatim[sid])verbatim[sid]={};
+    if(!verbatim[sid][p.id])verbatim[sid][p.id]='';
+  });
+  if(!N.syn)N.syn={};
+  if(!N.syn[p.id])N.syn[p.id]='';
+}
+P.forEach(initP);
+N.onething=''; N.cross=''; N['wr_enemy']=''; N['hyp']='';
+N.playback={frames:[...WH_FRAMES],reaction:'',votes:[null,null,null]};
+N.stimulus={urgent:null,own:null,note:''};
+
+try{
+  const sv=localStorage.getItem('vi_n');if(sv){const d=JSON.parse(sv);Object.keys(d).forEach(k=>{if(N[k]!==undefined){if(typeof N[k]==='object'&&N[k]!==null&&!Array.isArray(N[k]))Object.assign(N[k],d[k]);else N[k]=d[k]}})}
+  const sp=localStorage.getItem('vi_pr');if(sp)Object.assign(priorities,JSON.parse(sp));
+  const svb=localStorage.getItem('vi_vb');if(svb)Object.assign(verbatim,JSON.parse(svb));
+  const sc=localStorage.getItem('vi_c');if(sc){cur=parseInt(sc)||0;if(cur>=S.length)cur=0}
+  const spa=localStorage.getItem('vi_pa');if(spa){pa=parseInt(spa)||0;if(pa>=P.length)pa=0}
+}catch(e){}
+
+function persist(){
+  const snapshot=JSON.stringify({N,priorities,verbatim,cur,pa});
+  try{
+    localStorage.setItem('vi_n',JSON.stringify(N));
+    localStorage.setItem('vi_pr',JSON.stringify(priorities));
+    localStorage.setItem('vi_vb',JSON.stringify(verbatim));
+    localStorage.setItem('vi_c',cur);
+    localStorage.setItem('vi_pa',pa);
+    localStorage.setItem('vi_ts',Date.now());
+    // sessionStorage as a second backup layer
+    sessionStorage.setItem('vi_backup',snapshot);
+  }catch(e){console.warn('Save failed:',e)}
+  const el=document.getElementById('save-status');
+  if(el){
+    const t=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    el.textContent='Saved '+t;
+    el.style.color='var(--green)';
+    setTimeout(()=>{if(el)el.style.color='var(--td)'},2000);
+  }
+}
+
+function getLastSaved(){
+  try{const ts=localStorage.getItem('vi_ts');return ts?new Date(parseInt(ts)).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):null}catch(e){return null}
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  const s=S[cur];
+  renderHd(s);
+  const m=document.getElementById('main');
+  const t={
+    'welcome':rWelcome,'fr-purpose':rFrPurpose,'fr-land':rFrLand,'fr-hyp':rFrHyp,
+    'stim-ws':rStimWS,'stim-trends':rStimTrends,
+    'discussion':()=>rDiscussion(s),'capture':()=>rCapture(s),
+    'playback':rPlayback,'break':rBreak,'synthesis':rSyn,
+  };
+  m.innerHTML=(t[s.type]||rWelcome)();
+  bindAll();
+  renderFt(s);
+  const cb=document.getElementById('chal-btn'),tw=document.getElementById('timer-wrap');
+  cb.style.display=s.type==='capture'?'block':'none';
+  if(s.dur>0){tw.style.display='flex';if(!tRun){tRem=s.dur*60;updT()}}else{tw.style.display='none';stopT()}
+  if(s.type==='break'&&!tRun)setTimeout(()=>{if(S[cur].type==='break')startT()},600);
+  persist();
+}
+
+function autoResize(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'}
+function bindAll(){
+  document.querySelectorAll('textarea').forEach(ta=>{autoResize(ta);ta.addEventListener('input',()=>autoResize(ta))});
+  document.querySelectorAll('.cap-ta').forEach(t=>t.addEventListener('input',onNote));
+  document.querySelectorAll('.verbatim-ta').forEach(t=>t.addEventListener('input',onVerbatim));
+  document.querySelectorAll('.belief-ta').forEach(t=>t.addEventListener('input',onBelief));
+  document.querySelectorAll('.enemy-ta').forEach(t=>t.addEventListener('input',e=>{N['wr_enemy']=e.target.value;persist()}));
+  document.querySelectorAll('.cross-ta').forEach(t=>t.addEventListener('input',e=>{N.cross=e.target.value;persist()}));
+  document.querySelectorAll('.ot-ta').forEach(t=>t.addEventListener('input',e=>{N.onething=e.target.value;persist()}));
+  document.querySelectorAll('.hyp-ta').forEach(t=>t.addEventListener('input',e=>{N.hyp=e.target.value;persist()}));
+  document.querySelectorAll('.pb-frame-ta').forEach((t,i)=>t.addEventListener('input',e=>{N.playback.frames[i]=e.target.value;persist()}));
+  const pbr=document.querySelector('.pb-reaction-ta');if(pbr)pbr.addEventListener('input',e=>{N.playback.reaction=e.target.value;persist()});
+  const str=document.querySelector('.stim-note-ta');if(str)str.addEventListener('input',e=>{N.stimulus.note=e.target.value;persist()});
+}
+
+function renderHd(s){
+  // Progress bar
+  const pct=Math.round((cur/(S.length-1))*100);
+  const fill=document.getElementById('s-prog-fill');
+  if(fill)fill.style.width=pct+'%';
+  // Section label — show group + label
+  const lbl=s.grp&&s.label&&s.label!==s.grp?`${s.grp} — ${s.label}`:s.grp||s.label||'';
+  document.getElementById('s-lbl').textContent=lbl;
+}
+
+function renderFt(s){
+  document.getElementById('btn-prev').disabled=cur===0;
+  const nb=document.getElementById('btn-next');
+  nb.textContent=cur===S.length-1?'Finish':cur===0?'Begin Workshop →':'Next →';
+  document.getElementById('ft-nm').textContent=s.grp||s.label||'';
+  document.getElementById('ft-cnt').textContent=`${cur+1} / ${S.length}`;
+}
+
+// ── SCREENS ───────────────────────────────────────────────────────────────────
+
+function rWelcome(){
+  return`<div class="w-screen">
+  <div class="w-bg">INTEL</div>
+  <div class="cb-lockup">
+    <div class="cb-mark"><div class="cb-rule ammo"></div><span class="cb-name ammo">Ammunition</span></div>
+    <span class="cb-x">&times;</span>
+    <div class="cb-mark"><div class="cb-rule verisk"></div><span class="cb-name verisk">Verisk</span></div>
+  </div>
+  <div class="w-intel">Intel</div>
+  <h1 class="w-h1">The <em>Positioning</em><br>Workshop</h1>
+  <div class="w-workshop">15 June 2026 &nbsp;&middot;&nbsp; Online &nbsp;&middot;&nbsp; 8 Delegates</div>
+  <p class="w-sub">We bring the outside perspective.<br>You bring the inside reality.<br>Together we&rsquo;ll identify the shift, value and territory Intel is uniquely positioned to own.</p>
+  <div class="w-meta"><span>2 hours</span><span>4 personas</span><span>Output anchor: VIC London, 3 Sep 2026</span></div>
+  <button class="btn-start" onclick="go(1)">Begin Workshop &rarr;</button>
+  <div class="w-timeline">
+    <div class="tl-item"><div class="tl-time or">11:00</div><div class="tl-title">Framing</div><div class="tl-dur">10 min</div></div>
+    <div class="tl-item"><div class="tl-time vk">11:10</div><div class="tl-title">Market Shifts</div><div class="tl-dur">10 min</div></div>
+    <div class="tl-item"><div class="tl-time or">11:20</div><div class="tl-title">Current State</div><div class="tl-dur">20 min</div></div>
+    <div class="tl-item"><div class="tl-time or">11:40</div><div class="tl-title">What Changes</div><div class="tl-dur">20 min</div></div>
+    <div class="tl-item reads"><div class="tl-time or">12:00</div><div class="tl-title">Reads the Room</div><div class="tl-dur">5 min</div></div>
+    <div class="tl-item brk"><div class="tl-time dim">12:05</div><div class="tl-title">Break</div><div class="tl-dur">10 min</div></div>
+    <div class="tl-item"><div class="tl-time or">12:15</div><div class="tl-title">What&rsquo;s Protected</div><div class="tl-dur">20 min</div></div>
+    <div class="tl-item"><div class="tl-time or">12:35</div><div class="tl-title">What&rsquo;s Replaced</div><div class="tl-dur">20 min</div></div>
+  </div>
+  <div class="w-prework">
+    <div class="pw-item"><div class="pw-num">1</div><div class="pw-txt"><strong>The friction they see now</strong>One concrete example of where an investigator currently struggles. Specific, not general.</div></div>
+    <div class="pw-item"><div class="pw-num">2</div><div class="pw-txt"><strong>What &ldquo;confidence&rdquo; actually means</strong>Speed? Visibility? Audit trail? Multiple signals? How would you know it had shifted?</div></div>
+    <div class="pw-item"><div class="pw-num">3</div><div class="pw-txt"><strong>Who else wins</strong>When a fraud professional gets better at their job, who benefits downstream?</div></div>
+  </div>
+</div>`;
+}
+
+function rFrPurpose(){
+  return`<div class="fr-purpose">
+  <div class="fr-card">
+    <div class="fr-lbl">Our purpose today</div>
+    <div class="fr-txt">Ammunition is mapping how Intel changes the way fraud professionals actually work. Not a feature walkthrough &mdash; that&rsquo;s been done. Instead: behaviour shift, confidence shift, and what becomes possible for each role in a way it wasn&rsquo;t before.</div>
+  </div>
+  <div class="fr-anchor-card">
+    <div class="fr-lbl" style="color:var(--vk)">Campaign launch anchor</div>
+    <div class="fr-anchor-date">3 Sep 2026</div>
+    <div style="font-size:14px;color:var(--tm);line-height:1.6;margin-bottom:16px">VIC London. Verisk&rsquo;s flagship conference — the platform&rsquo;s public launch moment. Everything we build from today feeds backward to this date.</div>
+    <div class="fr-lbl">Decision-makers we&rsquo;re mapping today</div>
+    <div class="fr-p-list">${P.slice(0,4).map(p=>`<div class="fr-p-row"><div class="fr-p-dot" style="background:${p.c}"></div><strong style="color:var(--t)">${p.label}</strong><span style="color:var(--td)"> — ${p.role}</span></div>`).join('')}</div>
+  </div>
+  <div class="fr-card">
+    <div class="fr-lbl">What we need from you</div>
+    <div class="fr-txt">Your honest perspective on how fraud investigation actually works today. No sales language. Real friction, real stakes, real consequences. The more specific you are, the stronger the positioning becomes. If it could be said about any B2B product, it&rsquo;s not specific enough.</div>
+  </div>
+  <div class="fr-card">
+    <div class="fr-lbl">What this builds toward</div>
+    <div class="fr-txt">Today feeds: (1) the value proposition — the structural logic everything else hangs off; (2) a creative brief to support the internal naming process; (3) the campaign platform for VIC London and beyond. Intel sits alongside Analytics and DMF &mdash; today helps define where Intel&rsquo;s territory begins and ends.</div>
+  </div>
+  <div class="fr-rules">
+    <span class="fr-rules-lbl">Ground rules</span>
+    <div class="fr-rule"><div class="r-dot"></div>Honest perspective over polished messaging</div>
+    <div class="fr-rule"><div class="r-dot"></div>No sales language &mdash; real workflow, real friction</div>
+    <div class="fr-rule"><div class="r-dot"></div>Specific over general, always</div>
+    <div class="fr-rule"><div class="r-dot"></div>Disagreement is useful data</div>
+  </div>
+</div>`;
+}
+
+function rFrLand(){
+  return`<div class="fr-landscape">
+  <div class="screen-eye">The Competitive Landscape</div>
+  <h2 class="screen-h1">What the competition already owns.</h2>
+  <p class="screen-sub">Four players. Four positioning claims. And the gap none of them are filling. This is what we&rsquo;re working against &mdash; and what we&rsquo;re working toward.</p>
+  <div class="comp-grid">${COMP.map(c=>`<div class="comp-card" style="--comp-c:${c.color}">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${c.color}"></div>
+    <div class="comp-name">${c.name}</div>
+    <div class="comp-owns">${c.owns}</div>
+    <div class="comp-claim">${c.claim}</div>
+    <div>
+      <div class="comp-gap-lbl">The gap</div>
+      <div class="comp-gap">${c.gap}</div>
+    </div>
+  </div>`).join('')}</div>
+</div>`;
+}
+
+function rFrHyp(){
+  const hyp=N.hyp||WH_FRAMES[2];
+  return`<div class="fr-hyp">
+  <div class="hyp-eye">
+    <span style="color:var(--or)">Ammunition</span>
+    <span style="color:var(--td)">&times;</span>
+    <span style="color:var(--vk)">Verisk</span>
+    <span style="color:var(--td);font-weight:400;letter-spacing:0.06em"> — before we begin</span>
+  </div>
+  <h2 class="hyp-h1">Our working hypothesis.</h2>
+  <textarea class="hyp-ta" placeholder="Enter your working hypothesis...">${esc(hyp)}</textarea>
+</div>`;
+}
+
+function rStimWS(){
+  return`<div class="stim-ws">
+  <div class="stim-ws-bg">CONFIDENCE</div>
+  <div class="ws-eye">The territory nobody owns</div>
+  <div class="ws-word">Confidence.</div>
+  <div class="ws-divider"></div>
+  <p class="ws-body">FRISS automates trust at the point of claim.<br>Quantexa resolves entities and networks.<br>LexisNexis provides data signals.<br>Shift transforms with AI.<br><br><strong>None of them own what happens after the data lands</strong> &mdash; the fraud investigator&rsquo;s moment of professional certainty when they make a call, commit to a case, and defend it.<br><br>That&rsquo;s where Intel lives. If we say so first.</p>
+  <div style="max-width:680px;width:100%;background:rgba(27,110,194,0.08);border:1px solid var(--vk-mid);border-radius:var(--radl);padding:14px 18px;text-align:left;margin-top:0">
+    <div style="font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--vk);margin-bottom:6px">Question for the room</div>
+    <div style="font-size:14px;color:var(--t);line-height:1.6">Is the territory <strong>confidence</strong> — &ldquo;I know my decision is right and I can prove it&rdquo; — or <strong>peace of mind</strong> — &ldquo;I&rsquo;m not worried about what I might have missed&rdquo;? One is active and empowering. The other is anxiety reduction. Both are real. Which lands harder for your audience?</div>
+  </div>
+  <div class="ws-territory">${COMP.map(c=>`<div class="ws-comp"><div class="ws-comp-name" style="color:${c.color}">${c.name} owns:</div><div class="ws-comp-claim">${c.owns}</div></div>`).join('')}</div>
+</div>`;
+}
+
+function rStimTrends(){
+  const uv=N.stimulus?.urgent,ov=N.stimulus?.own;
+  const cards=TRENDS.map((t,i)=>{
+    const isU=uv===i,isO=ov===i;
+    return`<div class="trend-card${isU&&isO?' voted-both':isU?' voted-urgent':isO?' voted-own':''}" id="tc-${i}">
+      <div class="trend-card-hd"><div class="trend-num">${t.num}</div><div class="trend-title">${t.title}</div></div>
+      <div class="trend-body">
+        <div class="trend-evidence">${t.evidence}</div>
+        <div class="trend-prov">${t.prov}</div>
+      </div>
+      <div class="trend-votes">
+        <button class="tvote urgent${isU?' act':''}" onclick="voteTrend(${i},'urgent')">Most urgent</button>
+        <button class="tvote own${isO?' act':''}" onclick="voteTrend(${i},'own')">Intel can own</button>
+      </div>
+    </div>`;
+  }).join('');
+  const urgT=uv!=null?TRENDS[uv]:null,ownT=ov!=null?TRENDS[ov]:null;
+  return`<div class="stim-trends">
+  <div class="screen-eye">Market Intelligence &mdash; 10 minutes</div>
+  <h2 class="screen-h1">Five shifts rewriting the fraud challenge.</h2>
+  <p class="screen-sub" style="margin-bottom:20px">We&rsquo;ve read the research. These are the five market movements we think matter most for where Intel sits. Which is most urgent right now? Which one can Intel own?</p>
+  <div class="trend-grid">${cards}</div>
+  <div class="vote-tally">
+    <div><div class="tally-lbl">&#9650; Most urgent right now</div><div class="tally-val${!urgT?' empty':''}">${urgT?urgT.title:'Not voted yet'}</div></div>
+    <div class="tally-div"></div>
+    <div><div class="tally-lbl">&#9733; Intel can own</div><div class="tally-val${!ownT?' empty':''}">${ownT?ownT.title:'Not voted yet'}</div></div>
+    <div class="tally-div"></div>
+    <div style="flex:1"><div class="tally-lbl">Room notes</div><textarea class="stim-note-ta" style="width:100%;background:transparent;border:none;outline:none;color:var(--t);font-size:12px;font-family:var(--f);resize:none;line-height:1.5" rows="2" placeholder="What did the room say that's not in these cards...">${esc(N.stimulus?.note||'')}</textarea></div>
+  </div>
+</div>`;
+}
+
+function rDiscussion(s){
+  const cap=CAPS[s.capRef];if(!cap)return'<div></div>';
+  const allPrompts=P.slice(0,4).map(p=>`<div class="disc-persona-prompt">
+    <div class="disc-pp-name" style="color:${p.c}">${p.label}</div>
+    <div class="disc-pp-q">${cap.prompts[p.id]||''}</div>
+  </div>`).join('');
+  return`<div class="disc-screen">
+  <div class="disc-left">
+    <div class="disc-tag">${cap.tag}</div>
+    <h2 class="disc-h1">${cap.h1}</h2>
+    <p class="disc-sub">${cap.sub}</p>
+    <div style="font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--td);margin-bottom:12px">Questions per persona</div>
+    <div class="disc-prompts">${allPrompts}</div>
+  </div>
+  <div class="disc-right">
+    ${cap.qs.map((q,i)=>`<div class="disc-q">
+      <div class="disc-q-num">Question ${i+1}</div>
+      <div class="disc-q-lbl">${q.lbl}</div>
+      <div class="disc-q-hint">${q.ph}</div>
+    </div>`).join('')}
+  </div>
+</div>`;
+}
+
+function rCapture(s){
+  const cap=CAPS[s.capRef];if(!cap)return'<div></div>';
+  const p=P[pa];
+  const tabs=P.map((px,i)=>{
+    const pn=N[cap.id]?.[px.id]||{};
+    const filled=Object.values(pn).filter(v=>typeof v==='string'&&v.trim()).length;
+    const act=i===pa;
+    return`<button class="p-tab" style="${act?`border-color:${px.c};background:rgba(${px.r},0.09)`:''}" onclick="setPa(${i})">
+      <div class="p-tab-nm" style="${act?`color:${px.c}`:''}">
+        <span>${px.label}</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          ${filled>0?`<span style="font-size:9px;font-weight:800;color:${px.c}">${Math.min(filled,cap.qs.length)}/${cap.qs.length}</span>`:''}
+          ${i>=BASE_P.length?`<span onclick="event.stopPropagation();deletePersona(${i})" title="Remove persona" style="font-size:12px;color:var(--td);cursor:pointer;padding:0 2px;line-height:1" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--td)'">✕</span>`:''}
+        </span>
+      </div>
+      <div class="p-tab-rl">${px.role}</div>
+    </button>`;
+  }).join('');
+  const fields=cap.qs.map((q,i)=>{
+    const v=N[cap.id]?.[p.id]?.[q.id]||'';
+    const starred=priorities[cap.id]?.[p.id]?.[q.id]||false;
+    return`<div class="cap-field${starred?' starred':''}" id="f-${cap.id}-${p.id}-${q.id}">
+      <div class="cap-flbl"><div class="f-num">${i+1}</div><span class="f-lbl-txt">${q.lbl}</span><button class="star-btn${starred?' on':''}" onclick="toggleStar('${cap.id}','${p.id}','${q.id}')">&#9733;</button></div>
+      <textarea class="cap-ta" data-sid="${cap.id}" data-pid="${p.id}" data-qid="${q.id}" placeholder="${q.ph}">${esc(v)}</textarea>
+    </div>`;
+  }).join('');
+  const vbTxt=verbatim[cap.id]?.[p.id]||'';
+  const beliefV=N[cap.id]?.[p.id]?.['belief']||'';
+  const enemyV=N['wr_enemy']||'';
+  const isWR=cap.id==='wr';
+  return`<div class="cap-screen">
+  <div class="cap-topbar">
+    <div class="cap-tag">${cap.tag}</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="p-tabs">${tabs}</div>
+      <button class="add-p-btn" onclick="toggleAddForm()" title="Add persona">+</button>
+    </div>
+  </div>
+  <div class="add-p-form" id="add-p-form">
+    <input class="add-p-in" id="add-p-name" placeholder="Persona name" style="flex:2" onkeydown="if(event.key==='Enter')submitAddP()">
+    <input class="add-p-in" id="add-p-role" placeholder="Role" style="flex:2" onkeydown="if(event.key==='Enter')submitAddP()">
+    <button class="add-p-save" onclick="submitAddP()">Add</button>
+    <button class="add-p-cancel" onclick="toggleAddForm()">Cancel</button>
+  </div>
+  <div class="cap-persona-hd">
+    <div class="cap-pname" style="color:${p.c}">${p.label}</div>
+    <div class="cap-prole">${p.role}</div>
+  </div>
+  <div class="cap-prompt" style="border-left-color:${p.c}">${cap.prompts[p.id]||''}</div>
+  ${isWR?`<div class="comp-territory"><div class="ct-lbl">Competitive territory — what each player already owns</div><div class="ct-grid">${COMP.map(c=>`<div class="ct-item"><div class="ct-name">${c.name}</div><div class="ct-claim">${c.owns}</div></div>`).join('')}<div class="ct-item intel"><div class="ct-name">Intel</div><div class="ct-claim">Unclaimed &rarr;</div></div></div></div>`:''}
+  <div class="cap-fields">${fields}</div>
+  <div class="cap-extras">
+    ${cap.hasBeliefShift?`<div class="belief-field"><div class="belief-hd"><span>&#8596;</span> Belief shift &mdash; ${p.label}</div><textarea class="belief-ta" data-sid="${cap.id}" data-pid="${p.id}" placeholder="${p.label} used to think [_____]. Now they know [_____]." rows="3">${esc(beliefV)}</textarea></div>`:''}
+    <div class="verbatim-panel${cap.hasBeliefShift?'':' '}" style="${!cap.hasBeliefShift?'grid-column:1/-1':''}">
+      <div class="verbatim-hd"><span class="verbatim-icon">&#8220;</span><span class="verbatim-lbl">Verbatim</span><span class="verbatim-sub">Exact phrases for copy</span></div>
+      <textarea class="verbatim-ta" data-sid="${cap.id}" data-pid="${p.id}" placeholder="Exact words ${p.label} uses — capture raw, not paraphrased" rows="3">${esc(vbTxt)}</textarea>
+    </div>
+    ${isWR?`<div class="enemy-field" style="grid-column:1/-1"><div class="enemy-hd">Name the enemy &mdash; not a company, a condition or idea that Intel defeats</div><textarea class="enemy-ta" placeholder='e.g. "fragmentation", "the isolated investigator", "suspicion without proof"' rows="2">${esc(enemyV)}</textarea></div>`:''}
+  </div>
+</div>`;
+}
+
+function rPlayback(){
+  const frames=N.playback?.frames||WH_FRAMES;
+  const votes=N.playback?.votes||[null,null,null];
+  const reaction=N.playback?.reaction||'';
+  const frameHtml=frames.map((f,i)=>{
+    const v=votes[i];
+    return`<div class="pb-frame${v==='this-is'?' selected':v==='not-us'?' rejected':''}" id="pb-frame-${i}">
+      <div class="pb-frame-hd">
+        <span class="pb-frame-num${v==='this-is'?' sel':''}">Frame ${String(i+1).padStart(2,'0')}</span>
+        <div class="pb-frame-acts">
+          <button class="pb-react-btn this-is${v==='this-is'?' act':''}" onclick="voteFrame(${i},'this-is')">This is Intel</button>
+          <button class="pb-react-btn warmer${v==='warmer'?' act':''}" onclick="voteFrame(${i},'warmer')">Getting warmer</button>
+          <button class="pb-react-btn not-us${v==='not-us'?' act':''}" onclick="voteFrame(${i},'not-us')">Not us</button>
+        </div>
+      </div>
+      <textarea class="pb-frame-ta">${esc(f)}</textarea>
+    </div>`;
+  }).join('');
+  return`<div class="pb-screen">
+  <div class="pb-hd" style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px">
+    <div>
+      <div class="pb-eye">Ammunition &mdash; Reads the Room</div>
+      <h2 class="pb-h1">Here&rsquo;s what we think we&rsquo;ve heard.<br>Tell us where we&rsquo;re wrong.</h2>
+      <p class="pb-sub">Three positioning territories emerging from the last 50 minutes. Tell us which is closest, which is furthest, and what&rsquo;s missing from all three.</p>
+    </div>
+    <button onclick="synthesiseFromNotes()" style="flex-shrink:0;padding:10px 18px;border-radius:var(--rad);border:1px solid var(--vk-mid);background:var(--vk-dim);color:var(--vk);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);white-space:nowrap;margin-top:4px">↺ Refresh from notes</button>
+  </div>
+  <div class="pb-frames">${frameHtml}</div>
+  <div class="pb-reaction"><div class="pb-reaction-hd">Room reaction &mdash; what&rsquo;s right, wrong, or missing</div><textarea class="pb-reaction-ta" placeholder="Capture the disagreements, corrections, and moments where someone says something we haven't written yet...">${esc(reaction)}</textarea></div>
+</div>`;
+}
+
+function rBreak(){
+  const rt=()=>{const n=new Date();n.setMinutes(n.getMinutes()+10);return n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})};
+  return`<div class="brk-screen"><div class="brk-h1">Break.</div><div class="brk-sub">10 minutes. Back at ${rt()}.</div><div class="brk-t" id="brk-t">10:00</div><div class="brk-note"><div class="brk-nlbl">Coming up next</div><div class="brk-ntxt"><strong style="color:var(--t)">What&rsquo;s Protected</strong> &mdash; we shift from mapping the workflow to understanding what&rsquo;s at stake. What is each role personally defending? What does getting this wrong cost them?</div></div></div>`;
+}
+
+function rSyn(){
+  const capSecs=Object.values(CAPS);
+  const signalItems=[];
+  const sv=N.stimulus;if(sv?.urgent!=null)signalItems.push({t:'Most urgent shift',v:TRENDS[sv.urgent]?.title});
+  if(sv?.own!=null)signalItems.push({t:'Intel can own',v:TRENDS[sv.own]?.title});
+  const frames=N.playback?.frames||WH_FRAMES;const votes=N.playback?.votes||[];
+  const voteTxt={'this-is':'This is Intel','warmer':'Getting warmer','not-us':'Not us'};
+  frames.forEach((f,i)=>{if(votes[i])signalItems.push({t:voteTxt[votes[i]],v:f.slice(0,80)+(f.length>80?'…':'')})});
+  const enemyTxt=(N['wr_enemy']||'').trim();
+  if(enemyTxt)signalItems.push({t:'The enemy',v:enemyTxt});
+  const cards=P.map(p=>{
+    const srcClr=p.src==='brief'?'rgba(0,196,140,0.6)':'rgba(155,138,251,0.6)';
+    const rows=capSecs.map(cap=>{
+      const pn=N[cap.id]?.[p.id]||{};const pr=priorities[cap.id]?.[p.id]||{};const vb=(verbatim[cap.id]?.[p.id]||'').trim();
+      const beliefV=(pn['belief']||'').trim();
+      const parts=cap.qs.map(q=>{const v=(pn[q.id]||'').trim();return v?{v,starred:pr[q.id]}:null}).filter(Boolean);
+      const has=parts.length>0||beliefV;
+      if(!has)return`<div class="syn-row"><div class="syn-rl">${cap.tag.split('—')[1]?.trim()||cap.id}</div><div class="syn-ct emp">No notes</div></div>`;
+      return`<div class="syn-row"><div class="syn-rl">${cap.tag.split('—')[1]?.trim()||cap.id}</div><div class="syn-ct">${parts.map(pt=>pt.starred?`<div class="syn-star"><span class="syn-star-ic">&#9733;</span><span>${esc(pt.v)}</span></div>`:`<div>${esc(pt.v)}</div>`).join('')}${beliefV?`<div class="syn-belief">&#8596; ${esc(beliefV)}</div>`:''}${vb?`<div class="syn-vb">&#8220; ${esc(vb)} &#8221;</div>`:''}</div></div>`;
+    }).join('');
+    const sig=N.syn[p.id]||'';
+    return`<div class="p-card"><div class="p-card-hd"><div class="p-ind" style="background:${p.c}"></div><div class="p-card-nm" style="color:${p.c}">${p.label}</div><div class="p-card-rl" style="margin-left:auto;margin-right:4px">${p.role}</div><span class="p-src-tag" style="color:${srcClr}">${p.src==='brief'?'from brief':'custom'}</span></div>${rows}<div class="syn-row" style="background:rgba(${p.r},0.05)"><div class="syn-rl" style="color:${p.c}">Signal</div><textarea class="sig-ta cap-ta" data-sid="syn" data-pid="${p.id}" data-qid="" placeholder="[Need] → [what Intel gives them] → [what they can now defend]..." style="color:var(--t)">${esc(sig)}</textarea></div></div>`;
+  }).join('');
+  return`<div class="syn-screen">
+  <div class="syn-hd"><div><h2 class="syn-h1">Positioning signals.</h2><p class="syn-sub">Auto-compiled from all captures. &#9733; = starred. &#8596; = belief shifts. &#8220; = verbatim.</p></div><button class="btn-exp" onclick="exportW()">Export &rarr;</button></div>
+  <div class="ot-block"><div class="ot-lbl"><span style="color:var(--vk)">Intel</span> &mdash; The one thing</div><p class="ot-desc">A single sentence. No conjunctions. If it could be said about any B2B product, start again.</p><p class="ot-rule">Test: does it rule something out? Does it make someone uncomfortable? Good.</p><textarea class="ot-ta" placeholder="Verisk Intel is the only [category] that [specific, defensible, uncomfortable truth]...">${esc(N.onething||'')}</textarea></div>
+  ${signalItems.length>0?`<div class="syn-signals-block"><div class="syn-sig-lbl">Signals from the session</div><div class="syn-sig-rows">${signalItems.map(x=>`<div class="syn-sig-row"><span class="syn-sig-type">${esc(x.t)}</span><span class="syn-sig-txt">${esc(x.v)}</span></div>`).join('')}</div></div>`:''}
+  <div class="p-cards">${cards}</div>
+  <div class="cross-block"><div class="cross-lbl">Cross-persona territory</div><p class="cross-desc">What&rsquo;s consistent across all personas? This becomes the platform&rsquo;s core proposition.</p><textarea class="cross-ta" placeholder="The proposition true for every persona: what changes, what&rsquo;s protected, what becomes unnecessary...">${esc(N.cross||'')}</textarea></div>
+</div>`;
+}
+
+// ── EVENT HANDLERS ────────────────────────────────────────────────────────────
+function onNote(e){const t=e.target,sid=t.dataset.sid,pid=t.dataset.pid,qid=t.dataset.qid,v=t.value;if(sid==='syn'){if(!N.syn)N.syn={};N.syn[pid]=v}else if(sid&&pid&&qid){if(!N[sid])N[sid]={};if(!N[sid][pid])N[sid][pid]={};N[sid][pid][qid]=v}persist();updateTabBadges()}
+function onVerbatim(e){const t=e.target,sid=t.dataset.sid,pid=t.dataset.pid;if(!verbatim[sid])verbatim[sid]={};verbatim[sid][pid]=t.value;persist()}
+function onBelief(e){const t=e.target,sid=t.dataset.sid,pid=t.dataset.pid;if(!N[sid])N[sid]={};if(!N[sid][pid])N[sid][pid]={};N[sid][pid]['belief']=t.value;persist()}
+
+function updateTabBadges(){
+  const s=S[cur];if(s.type!=='capture')return;const cap=CAPS[s.capRef];if(!cap)return;
+  document.querySelectorAll('.p-tab').forEach((tab,i)=>{
+    const px=P[i];if(!px)return;
+    const pn=N[cap.id]?.[px.id]||{};
+    const filled=Object.values(pn).filter(v=>typeof v==='string'&&v.trim()).length;
+    const nm=tab.querySelector('.p-tab-nm');if(!nm)return;
+    let badge=tab.querySelector('.tbadge');
+    if(filled>0){if(!badge){badge=document.createElement('span');badge.className='tbadge';badge.style.cssText=`font-size:9px;font-weight:800;color:${px.c}`;nm.appendChild(badge)}badge.textContent=`${Math.min(filled,cap.qs.length)}/${cap.qs.length}`}
+  });
+}
+
+function toggleStar(sid,pid,qid){
+  if(!priorities[sid])priorities[sid]={};if(!priorities[sid][pid])priorities[sid][pid]={};
+  priorities[sid][pid][qid]=!priorities[sid][pid][qid];
+  const el=document.getElementById(`f-${sid}-${pid}-${qid}`);
+  const sb=el?.querySelector('.star-btn');
+  if(el)el.classList.toggle('starred',priorities[sid][pid][qid]);
+  if(sb)sb.classList.toggle('on',priorities[sid][pid][qid]);
+  persist();
+}
+
+function setPa(i){
+  pa=i;persist();
+  const s=S[cur];if(s.type!=='capture')return;const cap=CAPS[s.capRef];if(!cap)return;
+  const p=P[i];
+  document.querySelectorAll('.p-tab').forEach((tab,j)=>{
+    const px=P[j];const act=j===i;
+    tab.style.borderColor=act?px.c:'rgba(255,255,255,0.07)';tab.style.background=act?`rgba(${px.r},0.09)`:'var(--s1)';
+    const nm=tab.querySelector('.p-tab-nm');if(nm)nm.style.color=act?px.c:'var(--t)';
+  });
+  const pn=document.querySelector('.cap-pname');if(pn){pn.textContent=p.label;pn.style.color=p.c}
+  const pr=document.querySelector('.cap-prole');if(pr)pr.textContent=p.role;
+  const cp=document.querySelector('.cap-prompt');if(cp){cp.textContent=cap.prompts[p.id]||'';cp.style.borderLeftColor=p.c}
+  const cf=document.querySelector('.cap-fields');
+  if(cf){
+    cf.innerHTML=cap.qs.map((q,j)=>{const v=N[cap.id]?.[p.id]?.[q.id]||'';const starred=priorities[cap.id]?.[p.id]?.[q.id]||false;return`<div class="cap-field${starred?' starred':''}" id="f-${cap.id}-${p.id}-${q.id}"><div class="cap-flbl"><div class="f-num">${j+1}</div><span class="f-lbl-txt">${q.lbl}</span><button class="star-btn${starred?' on':''}" onclick="toggleStar('${cap.id}','${p.id}','${q.id}')">&#9733;</button></div><textarea class="cap-ta" data-sid="${cap.id}" data-pid="${p.id}" data-qid="${q.id}" placeholder="${q.ph}">${esc(v)}</textarea></div>`}).join('');
+    cf.querySelectorAll('.cap-ta').forEach(t=>t.addEventListener('input',onNote));
+  }
+  const bt=document.querySelector('.belief-ta');if(bt){bt.value=N[cap.id]?.[p.id]?.['belief']||'';bt.dataset.sid=cap.id;bt.dataset.pid=p.id;bt.addEventListener('input',onBelief)}
+  const vt=document.querySelector('.verbatim-ta');if(vt){vt.value=verbatim[cap.id]?.[p.id]||'';vt.dataset.sid=cap.id;vt.dataset.pid=p.id;vt.addEventListener('input',onVerbatim)}
+}
+
+function toggleAddForm(){const f=document.getElementById('add-p-form');if(f){f.classList.toggle('open');if(f.classList.contains('open'))document.getElementById('add-p-name')?.focus()}}
+function submitAddP(){
+  const name=(document.getElementById('add-p-name')?.value||'').trim();const role=(document.getElementById('add-p-role')?.value||'Custom persona').trim();if(!name)return;
+  const ci=(P.length-BASE_P.length)%EXTRA_C.length;const col=EXTRA_C[ci]||EXTRA_C[0];
+  const np={id:'c_'+Date.now(),label:name,role,c:col.c,r:col.r,src:'custom'};P.push(np);initP(np);
+  try{localStorage.setItem('vi_cp',JSON.stringify(P.slice(BASE_P.length)))}catch(e){}
+  pa=P.length-1;persist();render();
+}
+
+function voteTrend(i,type){
+  if(!N.stimulus)N.stimulus={urgent:null,own:null,note:''};
+  N.stimulus[type]=N.stimulus[type]===i?null:i;persist();
+  TRENDS.forEach((_,j)=>{const el=document.getElementById(`tc-${j}`);if(!el)return;const isU=N.stimulus.urgent===j,isO=N.stimulus.own===j;el.className='trend-card'+(isU&&isO?' voted-both':isU?' voted-urgent':isO?' voted-own':'');el.querySelector('.tvote.urgent')?.classList.toggle('act',isU);el.querySelector('.tvote.own')?.classList.toggle('act',isO)});
+  const uv=N.stimulus.urgent,ov=N.stimulus.own;
+  const tallies=document.querySelectorAll('.tally-val');
+  if(tallies[0]){const t=uv!=null?TRENDS[uv]:null;tallies[0].textContent=t?t.title:'Not voted yet';tallies[0].className='tally-val'+(t?'':' empty')}
+  if(tallies[1]){const t=ov!=null?TRENDS[ov]:null;tallies[1].textContent=t?t.title:'Not voted yet';tallies[1].className='tally-val'+(t?'':' empty')}
+}
+
+function voteFrame(i,v){
+  if(!N.playback)N.playback={frames:[...WH_FRAMES],reaction:'',votes:[null,null,null]};
+  N.playback.votes[i]=N.playback.votes[i]===v?null:v;persist();
+  document.querySelectorAll('.pb-frame').forEach((el,j)=>{const vote=N.playback.votes[j];el.classList.toggle('selected',vote==='this-is');el.classList.toggle('rejected',vote==='not-us');el.querySelector('.pb-frame-num')?.classList.toggle('sel',vote==='this-is')});
+  document.querySelectorAll('.pb-react-btn').forEach(btn=>{const fi=parseInt(btn.closest('.pb-frame')?.id?.replace('pb-frame-',''));if(isNaN(fi))return;const fv=N.playback.votes[fi];btn.classList.toggle('act',(btn.classList.contains('this-is')&&fv==='this-is')||(btn.classList.contains('warmer')&&fv==='warmer')||(btn.classList.contains('not-us')&&fv==='not-us'))});
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function goNext(){if(S[cur].type==='capture')showRecap(S[cur],()=>go(1));else go(1)}
+function go(d){const ni=cur+d;if(ni<0||ni>=S.length)return;closeOv();stopT();cur=ni;render();window.scrollTo(0,0)}
+function goTo(i){
+  const idx=parseInt(i,10);
+  if(isNaN(idx)||idx<0||idx>=S.length)return;
+  try{document.getElementById('overlay').classList.remove('open')}catch(e){}
+  try{stopT()}catch(e){}
+  cur=idx;
+  render();
+  window.scrollTo(0,0);
+}
+function showRecap(s,cont){
+  const cap=CAPS[s.capRef];if(!cap){cont();return}
+  const starred=[];P.forEach(p=>{cap.qs.forEach(q=>{if(priorities[cap.id]?.[p.id]?.[q.id]){const v=(N[cap.id]?.[p.id]?.[q.id]||'').trim();if(v)starred.push({persona:p.label,note:v.slice(0,90)+(v.length>90?'…':'')})}})});
+  const covered=P.filter(p=>cap.qs.some(q=>(N[cap.id]?.[p.id]?.[q.id]||'').trim())).length;
+  document.getElementById('ov-box').innerHTML=`<div class="ov-eye">Section complete</div><div class="ov-h1">${cap.h1.replace('.','')}</div><div class="ov-body">${covered} of ${P.length} personas captured${starred.length?' &nbsp;&middot;&nbsp; '+starred.length+' priority item'+(starred.length>1?'s':''):''}</div>${starred.length?`<div class="ov-stars">${starred.map(x=>`<div class="ov-star-item"><span class="ov-star-lbl">&#9733; ${x.persona}</span><span class="ov-star-txt">${esc(x.note)}</span></div>`).join('')}</div>`:''}<div class="ov-acts"><button class="ov-btn sec" onclick="closeOv()">Stay</button><button class="ov-btn prim" onclick="closeOv();go(1)">Continue &rarr;</button></div>`;
+  openOv();
+}
+function triggerChallenge(){
+  const s=S[cur];if(s.type!=='capture')return;const cap=CAPS[s.capRef];if(!cap)return;const p=P[pa];const q=CHALLENGES[cap.id]?.[p.id];if(!q)return;
+  document.getElementById('ov-box').innerHTML=`<div class="ov-eye">Challenge &mdash; ${p.label}</div><div class="ov-h1">${cap.tag.split('—')[1]?.trim()||''}</div><div class="ov-body challenge">${q}</div><div class="ov-note">Designed to be uncomfortable. Use to disrupt consensus and surface real perspective.</div><div class="ov-acts"><button class="ov-btn prim" onclick="closeOv()">Back to capture</button></div>`;
+  openOv();
+}
+function openOv(){document.getElementById('overlay').classList.add('open')}
+function closeOv(){document.getElementById('overlay').classList.remove('open')}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+function toggleTimer(){if(tRun)stopT();else startT()}
+function startT(){if(tRem<=0){const s=S[cur];tRem=(s.dur||10)*60}tRun=true;const b=document.getElementById('t-start');if(b){b.textContent='Pause';b.classList.add('on')}tInt=setInterval(()=>{tRem--;updT();const bt=document.getElementById('brk-t');if(bt)bt.textContent=fmt(tRem);if(tRem<=0)stopT()},1000)}
+function stopT(){if(tInt){clearInterval(tInt);tInt=null}tRun=false;const b=document.getElementById('t-start');if(b){b.textContent='Start';b.classList.remove('on')}}
+function resetTimer(){stopT();const s=S[cur];tRem=(s.dur||10)*60;updT()}
+function updT(){const el=document.getElementById('t-time');if(!el)return;el.textContent=fmt(tRem);el.className='t-time'+(tRem<=300?' warn':'')+(tRem<=60?' crit':'')}
+function fmt(sec){const m=Math.floor(Math.max(0,sec)/60);const s=Math.max(0,sec)%60;return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function exportW(){
+  let out=`THE INTEL POSITIONING WORKSHOP\nAmmunition × Verisk International\nMonday 15 June 2026 — Online (8 delegates)\nOutput anchor: VIC London, 3 September 2026\n\n${'═'.repeat(62)}\n\n`;
+  if(N.onething?.trim())out+=`THE ONE THING\n${N.onething.trim()}\n\n${'═'.repeat(62)}\n\n`;
+  if(N['wr_enemy']?.trim())out+=`THE ENEMY\n${N['wr_enemy'].trim()}\n\n`;
+  const sv=N.stimulus;if(sv?.urgent!=null||sv?.own!=null){out+=`MARKET SHIFTS\n`;if(sv.urgent!=null)out+=`  Most urgent: ${TRENDS[sv.urgent]?.title}\n`;if(sv.own!=null)out+=`  Intel can own: ${TRENDS[sv.own]?.title}\n`;if(sv.note?.trim())out+=`  Notes: ${sv.note.trim()}\n`;out+='\n'}
+  const frames=N.playback?.frames||[];const votes=N.playback?.votes||[];const voteTxt={'this-is':'This is Intel','warmer':'Getting warmer','not-us':'Not us'};
+  const votedFrames=frames.map((f,i)=>votes[i]?{f,v:voteTxt[votes[i]]||votes[i]}:null).filter(Boolean);
+  if(votedFrames.length){out+=`READS THE ROOM\n`;votedFrames.forEach(x=>out+=`  [${x.v}] ${x.f.slice(0,120)}\n`);if(N.playback?.reaction?.trim())out+=`  Room reaction: ${N.playback.reaction.trim()}\n`;out+='\n'}
+  P.forEach(p=>{
+    out+=`${p.label.toUpperCase()} — ${p.role}\n${'─'.repeat(44)}\n\n`;
+    Object.values(CAPS).forEach(cap=>{
+      const pn=N[cap.id]?.[p.id]||{};const pr=priorities[cap.id]?.[p.id]||{};
+      out+=`${cap.h1.toUpperCase()}\n`;
+      cap.qs.forEach(q=>{const n=pn[q.id];if(n?.trim())out+=`  ${pr[q.id]?'★ ':''}${q.lbl}:\n  ${n.trim().replace(/\n/g,'\n  ')}\n\n`});
+      const bv=pn['belief'];if(bv?.trim())out+=`  ↔ ${bv.trim()}\n\n`;
+      const vb=verbatim[cap.id]?.[p.id];if(vb?.trim())out+=`  " ${vb.trim()} "\n\n`;
+    });
+    const sig=N.syn?.[p.id];if(sig?.trim())out+=`POSITIONING SIGNAL\n  ${sig.trim()}\n\n`;
+    out+='\n';
+  });
+  if(N.cross?.trim())out+=`${'═'.repeat(62)}\nCROSS-PERSONA TERRITORY\n${N.cross.trim()}\n`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/plain'}));a.download=`Intel-Workshop-${new Date().toISOString().slice(0,10)}.txt`;a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── DELETE PERSONA ────────────────────────────────────────────────────────────
+function deletePersona(i){
+  if(i<BASE_P.length)return; // protect the 4 core personas
+  P.splice(i,1);
+  if(pa>=P.length)pa=P.length-1;
+  try{localStorage.setItem('vi_cp',JSON.stringify(P.slice(BASE_P.length)))}catch(e){}
+  persist();render();
+}
+
+// ── AUTO-SYNTHESIS FROM NOTES ─────────────────────────────────────────────────
+function synthesiseFromNotes(){
+  // Helper: collect all non-empty notes for a given section + question, sorted by persona
+  function collect(sid, qids){
+    const out=[];
+    P.slice(0,4).forEach(p=>{
+      qids.forEach(qid=>{
+        const v=(N[sid]?.[p.id]?.[qid]||'').trim();
+        if(v) out.push({p:p.label,v,starred:!!(priorities[sid]?.[p.id]?.[qid])});
+      });
+    });
+    out.sort((a,b)=>(b.starred?1:0)-(a.starred?1:0));
+    return out;
+  }
+  function lines(items){ return items.map(x=>`${x.starred?'★ ':''}${x.p}: ${x.v}`).join('\n\n'); }
+  function vbLines(){ return P.slice(0,4).flatMap(p=>['cs','wc'].map(sid=>{const v=(verbatim[sid]?.[p.id]||'').trim();return v?`${p.label}: "${v}"`:null})).filter(Boolean).join('\n\n'); }
+
+  // What they told us about today — friction, beliefs, gaps
+  const friction   = collect('cs',['q1']);
+  const beliefs_cs = collect('cs',['q2']);
+  const gaps       = collect('cs',['q3']);
+  const sectors_cs = collect('cs',['sector']);
+
+  // What changes — behaviour, confidence, new capabilities, belief shifts
+  const shift      = collect('wc',['q1']);
+  const confidence = collect('wc',['q2']);
+  const caps       = collect('wc',['q3']);
+  const sectors_wc = collect('wc',['sector']);
+  const proofs     = collect('wc',['proof']).concat(collect('cs',['proof']));
+
+  const beliefShifts=P.slice(0,4).map(p=>{const v=(N.wc?.[p.id]?.belief||'').trim();return v?`${p.label}: ${v}`:null}).filter(Boolean);
+  const vbAll=vbLines();
+
+  const total=[...friction,...beliefs_cs,...gaps,...shift,...confidence,...caps].length;
+  if(total===0){alert('Nothing captured yet in Current State or What Changes. Add notes in those sections first.');return;}
+
+  // ── FRAME 01: The current reality ──────────────────────────────────────────
+  const f1Parts=[];
+  if(friction.length)  f1Parts.push('FRICTION & WORKFLOW\n'+lines(friction));
+  if(beliefs_cs.length)f1Parts.push('CURRENT BELIEFS ABOUT FRAUD\n'+lines(beliefs_cs));
+  if(gaps.length)      f1Parts.push('INFORMATION GAPS & CONFIDENCE\n'+lines(gaps));
+  if(sectors_cs.length)f1Parts.push('SECTOR DIFFERENCES\n'+lines(sectors_cs));
+
+  // ── FRAME 02: What Intel changes ────────────────────────────────────────────
+  const f2Parts=[];
+  if(shift.length)     f2Parts.push('BEHAVIOUR SHIFT\n'+lines(shift));
+  if(confidence.length)f2Parts.push('CONFIDENCE SHIFT\n'+lines(confidence));
+  if(caps.length)      f2Parts.push('NEW CAPABILITIES\n'+lines(caps));
+  if(sectors_wc.length)f2Parts.push('SECTOR DIFFERENCES\n'+lines(sectors_wc));
+  if(vbAll)            f2Parts.push('VERBATIM FROM THE ROOM\n'+vbAll);
+
+  // ── FRAME 03: The territory ─────────────────────────────────────────────────
+  const f3Parts=[];
+  if(beliefShifts.length)f3Parts.push('BELIEF SHIFTS\n'+beliefShifts.join('\n\n'));
+  if(proofs.length)      f3Parts.push('PROOF POINTS & EVIDENCE\n'+lines(proofs));
+  if(!f3Parts.length){
+    // Fallback — pull starred items from both sections
+    const starred=[...friction,...beliefs_cs,...gaps,...shift,...confidence,...caps].filter(x=>x.starred);
+    if(starred.length) f3Parts.push('PRIORITY CAPTURES\n'+lines(starred));
+    else f3Parts.push('EMERGING TERRITORY\n'+lines([...shift,...confidence].slice(0,4)));
+  }
+
+  const placeholder='[Nothing captured here yet]';
+  N.playback.frames=[
+    f1Parts.length?f1Parts.join('\n\n──────────────────────────────\n\n'):placeholder,
+    f2Parts.length?f2Parts.join('\n\n──────────────────────────────\n\n'):placeholder,
+    f3Parts.length?f3Parts.join('\n\n──────────────────────────────\n\n'):placeholder,
+  ];
+  persist();
+  document.querySelectorAll('.pb-frame-ta').forEach((ta,i)=>{ta.value=N.playback.frames[i]||'';autoResize(ta);});
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// Show last-saved time on load
+window.addEventListener('load',()=>{
+  const ts=getLastSaved();
+  const el=document.getElementById('save-status');
+  if(ts&&el)el.textContent='Last saved '+ts;
+});
+
+// Warn before leaving if notes exist
+window.addEventListener('beforeunload',e=>{
+  const hasNotes=Object.values(CAPS).some(cap=>
+    P.some(p=>cap.qs.some(q=>(N[cap.id]?.[p.id]?.[q.id]||'').trim()))
+  );
+  if(hasNotes){
+    e.preventDefault();
+    e.returnValue='You have workshop notes. Export them first or they\'ll be saved in this browser.';
+    return e.returnValue;
+  }
+});
+
+render();
+</script>
+</body>
+</html>
