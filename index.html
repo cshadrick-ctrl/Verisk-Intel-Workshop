@@ -318,6 +318,23 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--f);-
 .cross-ta:focus{border-color:var(--bd2)}
 .cross-ta::placeholder{color:var(--tx)}
 
+/* STICKY NOTES */
+.sticky-toolbar{position:fixed;bottom:70px;right:16px;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--radl);z-index:400;padding:12px 14px;box-shadow:-2px 4px 20px rgba(0,0,0,0.5);display:none;align-items:center;gap:10px}
+.sticky-toolbar.open{display:flex}
+.sticky-colors{display:flex;gap:6px}
+.sticky-swatch{width:24px;height:24px;border-radius:5px;border:2px solid transparent;cursor:pointer;transition:transform .15s;flex-shrink:0}
+.sticky-swatch:hover{transform:scale(1.15)}
+.sticky-swatch.sel{border-color:var(--t)}
+.sticky-add-btn{padding:7px 14px;background:var(--or);color:#fff;border:none;border-radius:var(--rad);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);white-space:nowrap}
+.sticky-clear-btn{padding:7px 10px;background:transparent;color:var(--td);border:1px solid var(--bd2);border-radius:var(--rad);font-size:11px;cursor:pointer;font-family:var(--f)}
+.sticky-note{position:fixed;width:170px;border-radius:8px;box-shadow:3px 5px 16px rgba(0,0,0,0.5);z-index:450;display:flex;flex-direction:column;overflow:hidden}
+.sticky-note-bar{height:22px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:grab;user-select:none;background:rgba(0,0,0,0.12);flex-shrink:0}
+.sticky-note-bar:active{cursor:grabbing}
+.sticky-note-dots{font-size:11px;color:rgba(0,0,0,0.4);letter-spacing:2px}
+.sticky-note-del{background:none;border:none;cursor:pointer;font-size:14px;color:rgba(0,0,0,0.4);padding:0;line-height:1}
+.sticky-note-del:hover{color:rgba(0,0,0,0.75)}
+.sticky-note-ta{flex:1;background:transparent;border:none;resize:none;font-family:var(--f);font-size:13px;line-height:1.55;color:#1a1a1a;outline:none;padding:10px;min-height:100px}
+.sticky-note-ta::placeholder{color:rgba(0,0,0,0.35)}
 /* FOOTER */
 /* NEXT STEPS */
 .ns-screen{flex:1;display:flex;flex-direction:column;padding:56px 72px;overflow-y:auto}
@@ -361,6 +378,7 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--f);-
     </div>
     <div class="hd-r">
       <div id="save-status" style="font-size:10px;font-weight:600;color:var(--td);letter-spacing:0.04em;white-space:nowrap"></div>
+      <button class="hd-btn" onclick="toggleStickyPanel()" id="sticky-toggle-btn" title="Sticky notes">&#128204; Notes</button>
       <button class="hd-btn" id="chal-btn" onclick="triggerChallenge()" style="display:none">Challenge</button>
       <div class="timer-wrap" id="timer-wrap" style="display:none">
         <span class="t-time" id="t-time">20:00</span>
@@ -371,6 +389,18 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--f);-
   </header>
   <main class="main" id="main"></main>
   <div class="overlay" id="overlay"><div class="ov-box" id="ov-box"></div></div>
+  <div id="sticky-layer" style="position:fixed;inset:0;pointer-events:none;z-index:450"></div>
+  <div class="sticky-toolbar" id="sticky-panel">
+    <div class="sticky-colors">
+      <div class="sticky-swatch sel" style="background:#FFE566" onclick="selectColor('#FFE566',this)"></div>
+      <div class="sticky-swatch" style="background:#FFB3C8" onclick="selectColor('#FFB3C8',this)"></div>
+      <div class="sticky-swatch" style="background:#B3D9FF" onclick="selectColor('#B3D9FF',this)"></div>
+      <div class="sticky-swatch" style="background:#B3F0D4" onclick="selectColor('#B3F0D4',this)"></div>
+      <div class="sticky-swatch" style="background:#E8C4FF" onclick="selectColor('#E8C4FF',this)"></div>
+    </div>
+    <button class="sticky-add-btn" onclick="addSticky()">+ Add note</button>
+    <button class="sticky-clear-btn" onclick="clearStickies()">Clear all</button>
+  </div>
   <footer class="ft">
     <div style="display:flex;gap:8px;align-items:center">
       <button class="nav-btn" onclick="goTo(0)" style="font-size:11px;letter-spacing:0.04em">&laquo; Start</button>
@@ -1163,6 +1193,113 @@ function synthesiseFromNotes(){
   document.querySelectorAll('.pb-frame-ta').forEach((ta,i)=>{ta.value=N.playback.frames[i]||'';autoResize(ta);});
 }
 
+// ── STICKY NOTES ─────────────────────────────────────────────────────────────
+let stickyColor='#FFE566', _sd=null;
+if(!N.stickies)N.stickies=[];
+try{const sv=localStorage.getItem('vi_sk');if(sv)N.stickies=JSON.parse(sv)}catch(e){}
+
+function toggleStickyPanel(){
+  const p=document.getElementById('sticky-panel');
+  const b=document.getElementById('sticky-toggle-btn');
+  p.classList.toggle('open');
+  b.classList.toggle('on');
+}
+
+function selectColor(c,el){
+  stickyColor=c;
+  document.querySelectorAll('.sticky-swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function addSticky(){
+  const id='sk_'+Date.now();
+  // Place near centre, offset each one slightly
+  const offset=N.stickies.length*22;
+  const x=Math.min(window.innerWidth-190, Math.max(20, 300+offset));
+  const y=Math.min(window.innerHeight-180, Math.max(70, 140+offset));
+  N.stickies.push({id,text:'',color:stickyColor,x,y});
+  saveStickies();
+  // Add just this note to the layer
+  const layer=document.getElementById('sticky-layer');
+  if(layer){
+    const el=document.createElement('div');
+    el.innerHTML=stickyHTML({id,text:'',color:stickyColor,x,y});
+    layer.appendChild(el.firstElementChild);
+  }
+  setTimeout(()=>document.getElementById('sta_'+id)?.focus(),50);
+}
+
+function stickyHTML(s){
+  return`<div class="sticky-note" data-sid="${s.id}" style="left:${s.x}px;top:${s.y}px;background:${s.color};pointer-events:all">
+    <div class="sticky-note-bar" onmousedown="stickyDragStart(event,'${s.id}')">
+      <span class="sticky-note-dots">&#8942;&#8942;&#8942;</span>
+      <button class="sticky-note-del" onmousedown="event.stopPropagation()" onclick="deleteSticky('${s.id}')">&#215;</button>
+    </div>
+    <textarea class="sticky-note-ta" id="sta_${s.id}" placeholder="Type here..." oninput="updateStickyText('${s.id}',this.value)">${s.text||''}</textarea>
+  </div>`;
+}
+
+function renderStickies(){
+  const layer=document.getElementById('sticky-layer');
+  if(!layer)return;
+  layer.innerHTML=N.stickies.map(stickyHTML).join('');
+}
+
+function stickyDragStart(e,id){
+  if(e.target.tagName==='BUTTON')return;
+  const el=document.querySelector(`[data-sid="${id}"]`);
+  if(!el)return;
+  const r=el.getBoundingClientRect();
+  _sd={id,ox:e.clientX-r.left,oy:e.clientY-r.top};
+  el.style.boxShadow='6px 8px 24px rgba(0,0,0,0.65)';
+  el.style.zIndex='600';
+  e.preventDefault();
+}
+
+document.addEventListener('mousemove',e=>{
+  if(!_sd)return;
+  const el=document.querySelector(`[data-sid="${_sd.id}"]`);
+  if(!el)return;
+  const x=Math.max(0,Math.min(window.innerWidth-180,e.clientX-_sd.ox));
+  const y=Math.max(60,Math.min(window.innerHeight-160,e.clientY-_sd.oy));
+  el.style.left=x+'px';el.style.top=y+'px';
+});
+
+document.addEventListener('mouseup',e=>{
+  if(!_sd)return;
+  const el=document.querySelector(`[data-sid="${_sd.id}"]`);
+  if(el){
+    el.style.boxShadow='3px 5px 16px rgba(0,0,0,0.5)';el.style.zIndex='450';
+    const s=N.stickies.find(s=>s.id===_sd.id);
+    if(s){s.x=parseInt(el.style.left);s.y=parseInt(el.style.top);}
+    saveStickies();
+  }
+  _sd=null;
+});
+
+function deleteSticky(id){
+  N.stickies=N.stickies.filter(s=>s.id!==id);
+  document.querySelector(`[data-sid="${id}"]`)?.remove();
+  saveStickies();
+}
+
+function clearStickies(){
+  if(!N.stickies.length)return;
+  if(!confirm('Remove all '+N.stickies.length+' notes?'))return;
+  N.stickies=[];saveStickies();
+  const layer=document.getElementById('sticky-layer');
+  if(layer)layer.innerHTML='';
+}
+
+function updateStickyText(id,val){
+  const s=N.stickies.find(s=>s.id===id);
+  if(s){s.text=val;saveStickies();}
+}
+
+function saveStickies(){
+  try{localStorage.setItem('vi_sk',JSON.stringify(N.stickies))}catch(e){}
+}
+
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 // Show last-saved time on load
@@ -1170,6 +1307,7 @@ window.addEventListener('load',()=>{
   const ts=getLastSaved();
   const el=document.getElementById('save-status');
   if(ts&&el)el.textContent='Last saved '+ts;
+  renderStickies();
 });
 
 // Warn before leaving if notes exist
