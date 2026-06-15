@@ -609,6 +609,7 @@ function render(){
   cb.style.display=s.type==='capture'?'block':'none';
   if(s.dur>0){tw.style.display='flex';if(!tRun){tRem=s.dur*60;updT()}}else{tw.style.display='none';stopT()}
   if(s.type==='break'&&!tRun)setTimeout(()=>{if(S[cur].type==='break')startT()},600);
+  renderStickies();
   persist();
 }
 
@@ -1193,10 +1194,13 @@ function synthesiseFromNotes(){
   document.querySelectorAll('.pb-frame-ta').forEach((ta,i)=>{ta.value=N.playback.frames[i]||'';autoResize(ta);});
 }
 
-// ── STICKY NOTES ─────────────────────────────────────────────────────────────
+// ── STICKY NOTES (per-screen) ─────────────────────────────────────────────────
 let stickyColor='#FFE566', _sd=null;
-if(!N.stickies)N.stickies=[];
-try{const sv=localStorage.getItem('vi_sk');if(sv)N.stickies=JSON.parse(sv)}catch(e){}
+if(!N.stickies||Array.isArray(N.stickies))N.stickies={};
+try{const sv=localStorage.getItem('vi_sk');if(sv){const d=JSON.parse(sv);if(d&&!Array.isArray(d))Object.assign(N.stickies,d)}}catch(e){}
+
+function curSid(){return S[cur]?.id||'_'}
+function curNotes(){if(!N.stickies[curSid()])N.stickies[curSid()]=[];return N.stickies[curSid()]}
 
 function toggleStickyPanel(){
   const p=document.getElementById('sticky-panel');
@@ -1213,19 +1217,14 @@ function selectColor(c,el){
 
 function addSticky(){
   const id='sk_'+Date.now();
-  // Place near centre, offset each one slightly
-  const offset=N.stickies.length*22;
-  const x=Math.min(window.innerWidth-190, Math.max(20, 300+offset));
-  const y=Math.min(window.innerHeight-180, Math.max(70, 140+offset));
-  N.stickies.push({id,text:'',color:stickyColor,x,y});
+  const notes=curNotes();
+  const offset=notes.length*22;
+  const x=Math.min(window.innerWidth-240,Math.max(20,280+offset));
+  const y=Math.min(window.innerHeight-180,Math.max(70,130+offset));
+  notes.push({id,text:'',color:stickyColor,x,y});
   saveStickies();
-  // Add just this note to the layer
   const layer=document.getElementById('sticky-layer');
-  if(layer){
-    const el=document.createElement('div');
-    el.innerHTML=stickyHTML({id,text:'',color:stickyColor,x,y});
-    layer.appendChild(el.firstElementChild);
-  }
+  if(layer){const el=document.createElement('div');el.innerHTML=stickyHTML({id,text:'',color:stickyColor,x,y});layer.appendChild(el.firstElementChild)}
   setTimeout(()=>document.getElementById('sta_'+id)?.focus(),50);
 }
 
@@ -1242,7 +1241,7 @@ function stickyHTML(s){
 function renderStickies(){
   const layer=document.getElementById('sticky-layer');
   if(!layer)return;
-  layer.innerHTML=N.stickies.map(stickyHTML).join('');
+  layer.innerHTML=curNotes().map(stickyHTML).join('');
 }
 
 function stickyDragStart(e,id){
@@ -1265,12 +1264,12 @@ document.addEventListener('mousemove',e=>{
   el.style.left=x+'px';el.style.top=y+'px';
 });
 
-document.addEventListener('mouseup',e=>{
+document.addEventListener('mouseup',()=>{
   if(!_sd)return;
   const el=document.querySelector(`[data-sid="${_sd.id}"]`);
   if(el){
     el.style.boxShadow='3px 5px 16px rgba(0,0,0,0.5)';el.style.zIndex='450';
-    const s=N.stickies.find(s=>s.id===_sd.id);
+    const s=curNotes().find(s=>s.id===_sd.id);
     if(s){s.x=parseInt(el.style.left);s.y=parseInt(el.style.top);}
     saveStickies();
   }
@@ -1278,21 +1277,23 @@ document.addEventListener('mouseup',e=>{
 });
 
 function deleteSticky(id){
-  N.stickies=N.stickies.filter(s=>s.id!==id);
+  const sid=curSid();
+  if(N.stickies[sid])N.stickies[sid]=N.stickies[sid].filter(s=>s.id!==id);
   document.querySelector(`[data-sid="${id}"]`)?.remove();
   saveStickies();
 }
 
 function clearStickies(){
-  if(!N.stickies.length)return;
-  if(!confirm('Remove all '+N.stickies.length+' notes?'))return;
-  N.stickies=[];saveStickies();
+  const notes=curNotes();
+  if(!notes.length)return;
+  if(!confirm('Remove all '+notes.length+' notes from this screen?'))return;
+  N.stickies[curSid()]=[];saveStickies();
   const layer=document.getElementById('sticky-layer');
   if(layer)layer.innerHTML='';
 }
 
 function updateStickyText(id,val){
-  const s=N.stickies.find(s=>s.id===id);
+  const s=curNotes().find(s=>s.id===id);
   if(s){s.text=val;saveStickies();}
 }
 
